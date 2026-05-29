@@ -1,0 +1,80 @@
+{
+  "colorScheme": "dark",
+  "fonts": [
+    {
+      "family": "Google Sans",
+      "count": 3
+    }
+  ],
+  "colors": {
+    "primary": "#4D90FE",
+    "secondary": "#3079ED",
+    "accent": "#4285F4",
+    "background": "#191A1F",
+    "textPrimary": "#191A1F",
+    "link": "#4285F4"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Google Sans",
+      "heading": "Google Sans"
+    },
+    "fontStacks": {
+      "body": [
+        "Google Sans"
+      ],
+      "heading": [
+        "Google Sans"
+      ],
+      "paragraph": [
+        "Google Sans"
+      ]
+    },
+    "fontSizes": {
+      "h1": "13px",
+      "h2": "13px",
+      "body": "13px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "18px"
+  },
+  "components": {},
+  "images": {
+    "logo": null,
+    "favicon": "https://www.gstatic.com/labs-code/stitch/favicon-16x16.png",
+    "ogImage": "https://app-companion-430619.appspot.com/static/og.png"
+  },
+  "personality": {
+    "tone": "professional",
+    "energy": "medium",
+    "targetAudience": "unknown"
+  },
+  "designSystem": {
+    "framework": "unknown",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": false,
+      "llmSucceeded": false,
+      "finalSource": "none",
+      "rawLogoSelection": {
+        "selectedLogoIndex": -1,
+        "selectedLogoReasoning": "LLM failed",
+        "confidence": 0
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": false,
+      "llmSucceeded": false,
+      "error": "LLM call failed or returned fallback values"
+    }
+  }
+}
