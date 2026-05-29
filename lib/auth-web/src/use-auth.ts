@@ -1,4 +1,8 @@
+ "use client";
+
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import type { AuthUser } from "@barakah/api-client-react";
 
 export type { AuthUser };
@@ -8,17 +12,19 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export function useAuth(): AuthState {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/auth/user", { credentials: "include" })
+    fetch("/api/auth/me", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<{ user: AuthUser | null }>;
@@ -42,12 +48,21 @@ export function useAuth(): AuthState {
   }, []);
 
   const login = useCallback(() => {
-    window.location.href = "/login";
-  }, []);
+    void router.push("/login");
+  }, [router]);
 
-  const logout = useCallback(() => {
-    window.location.href = "/api/logout";
-  }, []);
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      setUser(null);
+      queryClient.clear();
+    } finally {
+      await router.replace("/login?loggedOut=1");
+    }
+  }, [queryClient, router]);
 
   return {
     user,
@@ -57,4 +72,3 @@ export function useAuth(): AuthState {
     logout,
   };
 }
-

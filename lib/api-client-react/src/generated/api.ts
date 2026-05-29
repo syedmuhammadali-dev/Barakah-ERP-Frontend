@@ -151,7 +151,7 @@ export function useHealthCheck<
  * @summary Get the currently authenticated user
  */
 export const getGetCurrentAuthUserUrl = () => {
-  return `/api/auth/user`;
+  return `/api/auth/me`;
 };
 
 export const getCurrentAuthUser = async (
@@ -164,7 +164,7 @@ export const getCurrentAuthUser = async (
 };
 
 export const getGetCurrentAuthUserQueryKey = () => {
-  return [`/api/auth/user`] as const;
+  return [`/api/auth/me`] as const;
 };
 
 export const getGetCurrentAuthUserQueryOptions = <
@@ -237,8 +237,8 @@ export const getBeginBrowserLoginUrl = (params?: BeginBrowserLoginParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/login?${stringifiedParams}`
-    : `/api/login`;
+    ? `/api/auth/login?${stringifiedParams}`
+    : `/api/auth/login`;
 };
 
 export const beginBrowserLogin = async (
@@ -254,7 +254,7 @@ export const beginBrowserLogin = async (
 export const getBeginBrowserLoginQueryKey = (
   params?: BeginBrowserLoginParams,
 ) => {
-  return [`/api/login`, ...(params ? [params] : [])] as const;
+  return [`/api/auth/login`, ...(params ? [params] : [])] as const;
 };
 
 export const getBeginBrowserLoginQueryOptions = <
@@ -426,7 +426,7 @@ export function useHandleBrowserLoginCallback<
  * @summary Clear the session and begin OIDC logout
  */
 export const getLogoutBrowserSessionUrl = () => {
-  return `/api/logout`;
+  return `/api/auth/logout`;
 };
 
 export const logoutBrowserSession = async (
@@ -439,7 +439,7 @@ export const logoutBrowserSession = async (
 };
 
 export const getLogoutBrowserSessionQueryKey = () => {
-  return [`/api/logout`] as const;
+  return [`/api/auth/logout`] as const;
 };
 
 export const getLogoutBrowserSessionQueryOptions = <

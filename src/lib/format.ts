@@ -3,7 +3,7 @@ export function toNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(numericValue) ? numericValue : fallback;
 }
 
-export function formatMoney(value: unknown, currency = "SAR"): string {
+export function formatMoney(value: unknown, currency = "PKR"): string {
   return `${currency} ${toNumber(value).toLocaleString()}`;
 }
 
