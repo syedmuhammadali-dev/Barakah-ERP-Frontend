@@ -1,7 +1,6 @@
  "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -17,18 +16,26 @@ import {
 import { motion } from "framer-motion";
 import { useAuth } from "@barakah/auth-web";
 import { useRouter } from "next/navigation";
+import { useAppLocale } from "@/lib/i18n";
+import { AppLink, useRouteTransition } from "@/components/route-transition";
+import { LanguageToggle } from "@/components/language-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Landing() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const { t } = useAppLocale();
+  const { beginTransition } = useRouteTransition();
 
   useEffect(() => {
     void router.prefetch("/login");
+    void router.prefetch("/signup");
     void router.prefetch("/dashboard");
     if (!isLoading && isAuthenticated) {
+      beginTransition();
       router.replace("/dashboard");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [beginTransition, isAuthenticated, isLoading, router]);
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary">
@@ -64,20 +71,22 @@ export function Landing() {
             </a>
           </nav>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <LanguageToggle />
             <Button
               variant="ghost"
               className="hidden md:inline-flex"
               asChild
               data-testid="link-login"
             >
-              <Link href="/login">Log in</Link>
+              <AppLink href="/login">{t("landing.login")}</AppLink>
             </Button>
             <Button
               className="font-bold"
               asChild
               data-testid="button-get-started"
             >
-              <Link href="/login">Get Started</Link>
+              <AppLink href="/signup">{t("landing.getStarted")}</AppLink>
             </Button>
           </div>
         </div>
@@ -111,9 +120,9 @@ export function Landing() {
                 asChild
                 data-testid="button-hero-cta"
               >
-                <Link href="/login">
-                  Enter Dashboard <ChevronRight className="ml-2 w-5 h-5" />
-                </Link>
+                <AppLink href="/signup">
+                  {t("landing.getStarted")} <ChevronRight className="ml-2 w-5 h-5" />
+                </AppLink>
               </Button>
               <Button
                 size="lg"
@@ -122,7 +131,7 @@ export function Landing() {
                 asChild
                 data-testid="button-book-demo"
               >
-                <Link href="/subscription">Book a Demo</Link>
+                <AppLink href="/subscription">{t("landing.bookDemo")}</AppLink>
               </Button>
             </div>
           </motion.div>
@@ -307,7 +316,7 @@ export function Landing() {
                   asChild
                   data-testid="button-plan-standard"
                 >
-                  <Link href="/login">Start Free Trial</Link>
+                  <AppLink href="/signup">{t("landing.getStarted")}</AppLink>
                 </Button>
               </CardContent>
             </Card>
@@ -345,7 +354,7 @@ export function Landing() {
                   asChild
                   data-testid="button-plan-enterprise"
                 >
-                  <Link href="/subscription">Get Enterprise</Link>
+                  <AppLink href="/subscription">{t("landing.bookDemo")}</AppLink>
                 </Button>
               </CardContent>
             </Card>
@@ -363,15 +372,15 @@ export function Landing() {
             Barakah ERP
           </div>
           <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-foreground">
+            <AppLink href="/privacy" className="hover:text-foreground">
               Privacy Policy
-            </Link>
-            <Link href="/terms" className="hover:text-foreground">
+            </AppLink>
+            <AppLink href="/terms" className="hover:text-foreground">
               Terms of Service
-            </Link>
-            <Link href="/subscription" className="hover:text-foreground">
+            </AppLink>
+            <AppLink href="/subscription" className="hover:text-foreground">
               Contact Support
-            </Link>
+            </AppLink>
           </div>
           <p>{"\u00A9"} {new Date().getFullYear()} Barakah ERP. All rights reserved.</p>
         </div>

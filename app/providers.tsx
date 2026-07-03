@@ -5,6 +5,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { useState } from "react";
+import { LocaleProvider } from "@/lib/i18n";
+import { RouteTransitionProvider } from "@/components/route-transition";
+import { setBaseUrl } from "@barakah/api-client-react";
+import { API_BASE_URL } from "@/lib/api";
+
+setBaseUrl(API_BASE_URL || null);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -19,13 +25,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          {children}
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <LocaleProvider>
+        <RouteTransitionProvider>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </QueryClientProvider>
+        </RouteTransitionProvider>
+      </LocaleProvider>
     </ThemeProvider>
   );
 }

@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { ReactNode, useEffect } from "react";
 import {
@@ -26,15 +26,20 @@ import {
 import { useAuth } from "@barakah/auth-web";
 import { useGetBusinessProfile } from "@barakah/api-client-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { AppLink, useRouteTransition } from "@/components/route-transition";
+import { LanguageToggle } from "@/components/language-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useAppLocale } from "@/lib/i18n";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { beginTransition } = useRouteTransition();
+  const { t } = useAppLocale();
   const { data: profile } = useGetBusinessProfile({
     query: {
       queryKey: ["businessProfile"],
@@ -43,15 +48,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
   });
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Inventory", href: "/inventory", icon: Package },
-    { name: "Sales", href: "/sales", icon: ShoppingCart },
-    { name: "Reports", href: "/reports", icon: BarChart3 },
-    { name: "Zakat", href: "/zakat", icon: Calculator },
-    { name: "Salesmen", href: "/salesmen", icon: Users },
-    { name: "Suppliers", href: "/suppliers", icon: Truck },
-    { name: "Settings", href: "/settings", icon: Settings },
-    { name: "Subscription", href: "/subscription", icon: CreditCard },
+    { name: t("nav.dashboard"), href: "/dashboard", icon: LayoutDashboard },
+    { name: t("nav.inventory"), href: "/inventory", icon: Package },
+    { name: t("nav.sales"), href: "/sales", icon: ShoppingCart },
+    { name: t("nav.reports"), href: "/reports", icon: BarChart3 },
+    { name: t("nav.zakat"), href: "/zakat", icon: Calculator },
+    { name: t("nav.salesmen"), href: "/salesmen", icon: Users },
+    { name: t("nav.suppliers"), href: "/suppliers", icon: Truck },
+    { name: t("nav.settings"), href: "/settings", icon: Settings },
+    { name: t("nav.subscription"), href: "/subscription", icon: CreditCard },
   ];
 
   useEffect(() => {
@@ -97,20 +102,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
-                      <Link
-                        href={item.href}
-                        className="flex items-center gap-3"
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                        <AppLink
+                          href={item.href}
+                          className="flex items-center gap-3"
+                        >
+                          <item.icon className="h-5 w-5" />
+                          <span>{item.name}</span>
+                        </AppLink>
+                      </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               })}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="p-4 border-t border-sidebar-border">
+            <div className="flex items-center gap-2 px-2 mb-3">
+              <ThemeToggle />
+              <LanguageToggle />
+            </div>
             <div className="flex items-center gap-3 mb-4 px-2">
               <Avatar className="h-10 w-10 border border-sidebar-border">
                 <AvatarImage src={user?.profileImageUrl || undefined} />
@@ -135,6 +144,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 setIsLoggingOut(true);
                 try {
                   await logout();
+                  beginTransition();
                 } finally {
                   setIsLoggingOut(false);
                 }
@@ -142,7 +152,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               className="flex items-center gap-3 w-full px-2 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent rounded-md transition-colors"
             >
               <LogOut className="h-5 w-5" />
-              <span>{isLoggingOut ? "Logging out..." : "Logout"}</span>
+              <span>{isLoggingOut ? t("common.loading") : t("nav.logout")}</span>
             </button>
           </SidebarFooter>
         </Sidebar>
