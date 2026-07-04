@@ -68,16 +68,19 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   return (
     <RouteTransitionContext.Provider value={value}>
       {children}
-      {isTransitioning ? <RouteTransitionOverlay /> : null}
+      <RouteTransitionOverlay visible={isTransitioning} />
     </RouteTransitionContext.Provider>
   );
 }
 
-function RouteTransitionOverlay() {
+function RouteTransitionOverlay({ visible }: { visible: boolean }) {
   const { t } = useAppLocale();
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/70 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-background/70 backdrop-blur-sm transition-opacity duration-300"
+      style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none" }}
+    >
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card px-6 py-5 shadow-2xl">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
         <div className="text-sm font-medium">{t("route.loading")}</div>

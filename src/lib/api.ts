@@ -1,13 +1,6 @@
-const RAW_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_TARGET ??
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "";
-
-export const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
-
 export function apiUrl(pathname: string) {
   const normalizedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
-  return API_BASE_URL ? `${API_BASE_URL}${normalizedPath}` : normalizedPath;
+  return normalizedPath;
 }
 
 export async function apiRequest<T>(

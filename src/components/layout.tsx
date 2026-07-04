@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarProvider,
   SidebarFooter,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
   LayoutDashboard,
@@ -157,6 +158,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-auto bg-background text-foreground">
+          <SidebarTrigger className="fixed top-3 left-3 z-50 md:hidden" />
           <div className="p-8">{children}</div>
         </main>
       </div>

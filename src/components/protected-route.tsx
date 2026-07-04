@@ -35,10 +35,8 @@ export function ProtectedRoute({
     }
 
     if (isAuthenticated && !isProfileLoading) {
-      const status =
-        (businessProfileError as any)?.status ??
-        (businessProfileError as any)?.response?.status;
-      const isProfileMissing = status === 404;
+      const isProfileMissing =
+        businessProfileError != null || businessProfile == null;
 
       if (isProfileMissing && pathname !== "/onboarding") {
         router.replace("/onboarding");
@@ -62,6 +60,13 @@ export function ProtectedRoute({
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  const isProfileMissing =
+    businessProfileError != null || businessProfile == null;
+
+  if (isProfileMissing) {
+    return <AppShellSkeleton />;
   }
 
   return (

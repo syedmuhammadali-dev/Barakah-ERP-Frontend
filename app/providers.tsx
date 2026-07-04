@@ -8,14 +8,19 @@ import { useState } from "react";
 import { LocaleProvider } from "@/lib/i18n";
 import { RouteTransitionProvider } from "@/components/route-transition";
 import { setBaseUrl } from "@barakah/api-client-react";
-import { API_BASE_URL } from "@/lib/api";
 
-setBaseUrl(API_BASE_URL || null);
+setBaseUrl(null);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            staleTime: 30000,
+          },
+        },
         queryCache: new QueryCache({
           onError: () => {
             // Handled by local section-level error states.

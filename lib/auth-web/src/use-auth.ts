@@ -24,26 +24,36 @@ export function useAuth(): AuthState {
   useEffect(() => {
     let cancelled = false;
 
-    fetch("/api/auth/me", { credentials: "include" })
-      .then((res) => {
+    async function fetchUser() {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<{ user: AuthUser | null }>;
-      })
-      .then((data) => {
+        const data = (await res.json()) as { user: AuthUser | null };
         if (!cancelled) {
           setUser(data.user ?? null);
           setIsLoading(false);
         }
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) {
           setUser(null);
           setIsLoading(false);
         }
-      });
+      }
+    }
+
+    fetchUser();
+
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) {
+        fetchUser();
+      }
+    }
+
+    window.addEventListener("pageshow", onPageShow);
 
     return () => {
       cancelled = true;
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
 

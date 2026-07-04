@@ -61,6 +61,17 @@ export function Onboarding() {
     timezone: "(GMT+05:00) Karachi",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
   const completeOnboarding = useCompleteOnboarding({
     mutation: {
       onSuccess: () => {
@@ -72,18 +83,30 @@ export function Onboarding() {
     },
   });
 
+  const validateStep1 = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!form.businessName.trim()) {
+      newErrors.businessName = "Business name is required";
+    }
+    if (!form.businessType) {
+      newErrors.businessType = "Please select a business type";
+    } else if (form.businessType === "custom" && !form.customBusinessType.trim()) {
+      newErrors.customBusinessType = "Please enter your business type";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = () => {
     if (step === 1) {
-      if (!form.businessName.trim()) {
-        toast.error("Please enter your business name");
-        return;
-      }
-      if (!form.businessType) {
-        toast.error("Please select a business type");
-        return;
-      }
+      if (!validateStep1()) return;
     }
     if (step < 3) setStep((s) => s + 1);
+  };
+
+  const handleFieldChange = (field: string, value: unknown) => {
+    setForm((f) => ({ ...f, [field]: value }));
+    clearError(field);
   };
 
   useEffect(() => {
@@ -175,11 +198,15 @@ export function Onboarding() {
                     id="bizname"
                     placeholder="e.g. Ahmed Spare Parts"
                     value={form.businessName}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, businessName: e.target.value }))
-                    }
-                    className="h-11"
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, businessName: e.target.value }));
+                      clearError("businessName");
+                    }}
+                    className={`h-11 ${errors.businessName ? "border-destructive" : ""}`}
                   />
+                  {errors.businessName && (
+                    <p className="text-sm text-destructive">{errors.businessName}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -188,13 +215,16 @@ export function Onboarding() {
                     {BUSINESS_TYPES.map(({ id, label, icon: Icon }) => (
                       <button
                         key={id}
-                        onClick={() =>
-                          setForm((f) => ({ ...f, businessType: id }))
-                        }
+                        onClick={() => {
+                          setForm((f) => ({ ...f, businessType: id }));
+                          clearError("businessType");
+                        }}
                         className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-medium ${
                           form.businessType === id
                             ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
+                            : errors.businessType
+                              ? "border-destructive hover:border-destructive/50"
+                              : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
                         }`}
                       >
                         <Icon className="w-6 h-6" />
@@ -204,18 +234,27 @@ export function Onboarding() {
                       </button>
                     ))}
                   </div>
+                  {errors.businessType && (
+                    <p className="text-sm text-destructive">{errors.businessType}</p>
+                  )}
                   {form.businessType === "custom" && (
-                    <Input
-                      placeholder="Enter your business type"
-                      value={form.customBusinessType}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          customBusinessType: e.target.value,
-                        }))
-                      }
-                      className="mt-2 h-11"
-                    />
+                    <div className="mt-2 space-y-1">
+                      <Input
+                        placeholder="Enter your business type"
+                        value={form.customBusinessType}
+                        onChange={(e) => {
+                          setForm((f) => ({
+                            ...f,
+                            customBusinessType: e.target.value,
+                          }));
+                          clearError("customBusinessType");
+                        }}
+                        className={`h-11 ${errors.customBusinessType ? "border-destructive" : ""}`}
+                      />
+                      {errors.customBusinessType && (
+                        <p className="text-sm text-destructive">{errors.customBusinessType}</p>
+                      )}
+                    </div>
                   )}
                 </div>
 
