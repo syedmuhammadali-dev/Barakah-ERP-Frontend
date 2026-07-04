@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -28,18 +29,18 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevPathnameRef = useRef(pathname);
 
   useEffect(() => {
-    if (!isTransitioning) {
-      return;
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      setIsTransitioning(false);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
-
-    setIsTransitioning(false);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-  }, [pathname, isTransitioning]);
+  }, [pathname]);
 
   useEffect(() => {
     return () => {
@@ -49,7 +50,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const beginTransition = () => {
+  const beginTransition = useCallback(() => {
     setIsTransitioning(true);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -57,11 +58,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     timeoutRef.current = setTimeout(() => {
       setIsTransitioning(false);
     }, 2000);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({ isTransitioning, beginTransition }),
-    [isTransitioning],
+    [isTransitioning, beginTransition],
   );
 
   return (

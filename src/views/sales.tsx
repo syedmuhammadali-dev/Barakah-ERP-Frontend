@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatMoney, formatPercent } from "@/lib/format";
+import { useAppLocale } from "@/lib/i18n";
 
 const saleFormSchema = z.object({
   customerName: z.string().min(2, "Customer name is required"),
@@ -72,6 +73,7 @@ export function Sales() {
   const queryClient = useQueryClient();
   const createSale = useCreateSale();
   const { data: salesmen } = useListSalesmen();
+  const { t } = useAppLocale();
 
   const { data: summary, isLoading: summaryLoading, error: summaryError } =
     useGetSalesSummary();
@@ -115,7 +117,7 @@ export function Sales() {
 
   const handleExportCsv = () => {
     const rows = [
-      ["Invoice ID", "Date", "Customer", "Salesman", "Payment", "Total", "Status"],
+      [t("sales.invoiceId"), "Date", t("sales.customer"), t("sales.salesman"), t("sales.payment"), t("sales.total"), t("sales.status")],
       ...filteredSales.map((sale) => [
         sale.invoiceId,
         sale.saleDate,
@@ -194,26 +196,26 @@ export function Sales() {
     <div className="space-y-6">
       <div className="flex justify-between items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sales Ledger</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("sales.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Transaction history and daily performance
+            {t("sales.description")}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" className="border-border" onClick={handleExportCsv}>
-            <Download className="w-4 h-4 mr-2" /> Export CSV
+            <Download className="w-4 h-4 mr-2" /> {t("sales.exportCsv")}
           </Button>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                <ShoppingCart className="w-4 h-4 mr-2" /> Add Sale
+                <ShoppingCart className="w-4 h-4 mr-2" /> {t("sales.addSale")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[520px]">
               <DialogHeader>
-                <DialogTitle>Add New Sale</DialogTitle>
+                <DialogTitle>{t("sales.addNewSale")}</DialogTitle>
                 <DialogDescription>
-                  Create a new invoice entry and record the payment details.
+                  {t("sales.addSaleDescription")}
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -223,7 +225,7 @@ export function Sales() {
                     name="customerName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Customer Name</FormLabel>
+                        <FormLabel>{t("sales.customerName")}</FormLabel>
                         <FormControl>
                           <Input placeholder="Ahmed Traders" {...field} />
                         </FormControl>
@@ -238,7 +240,7 @@ export function Sales() {
                       name="salesmanId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Salesman</FormLabel>
+                          <FormLabel>{t("sales.salesman")}</FormLabel>
                           <Select
                             value={field.value ?? "none"}
                             onValueChange={field.onChange}
@@ -249,7 +251,7 @@ export function Sales() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="none">No salesman</SelectItem>
+                              <SelectItem value="none">{t("sales.noSalesman")}</SelectItem>
                               {(salesmen ?? []).map((salesman) => (
                                 <SelectItem key={salesman.id} value={String(salesman.id)}>
                                   {salesman.name}
@@ -266,7 +268,7 @@ export function Sales() {
                       name="paymentMethod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Payment Method</FormLabel>
+                          <FormLabel>{t("sales.paymentMethod")}</FormLabel>
                           <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger>
@@ -291,7 +293,7 @@ export function Sales() {
                       name="total"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Total (PKR)</FormLabel>
+                          <FormLabel>{t("sales.totalPkr")}</FormLabel>
                           <FormControl>
                             <Input type="number" min="0" step="0.01" {...field} />
                           </FormControl>
@@ -304,7 +306,7 @@ export function Sales() {
                       name="discount"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Discount (PKR)</FormLabel>
+                          <FormLabel>{t("sales.discount")}</FormLabel>
                           <FormControl>
                             <Input type="number" min="0" step="0.01" {...field} />
                           </FormControl>
@@ -315,7 +317,7 @@ export function Sales() {
                   </div>
 
                   <Button type="submit" className="w-full" disabled={createSale.isPending}>
-                    {createSale.isPending ? "Saving..." : "Save Sale"}
+                    {createSale.isPending ? "Saving..." : t("sales.saveSale")}
                   </Button>
                 </form>
               </Form>
@@ -327,7 +329,7 @@ export function Sales() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Daily Sales</p>
+            <p className="text-sm font-medium text-muted-foreground">{t("sales.dailySales")}</p>
             {summaryLoading ? (
               <Skeleton className="h-8 w-32 mt-1" />
             ) : (
@@ -341,12 +343,12 @@ export function Sales() {
               <p className="text-xs text-muted-foreground mt-2">
                 <span
                   className={
-                    summary?.dailyChange && summary.dailyChange >= 0
+                    summary?.dailyChange != null && summary.dailyChange >= 0
                       ? "text-green-500"
                       : "text-red-500"
                   }
                 >
-                  {summary?.dailyChange && summary.dailyChange > 0 ? "+" : ""}
+                  {summary?.dailyChange != null && summary.dailyChange > 0 ? "+" : ""}
                   {formatPercent(summary?.dailyChange ?? 0, 0)}
                 </span>{" "}
                 vs yesterday
@@ -354,7 +356,7 @@ export function Sales() {
             )}
             {summaryError ? (
               <p className="text-xs text-destructive mt-2">
-                Sales summary unavailable.
+                {t("sales.summaryUnavailable")}
               </p>
             ) : null}
           </CardContent>
@@ -362,7 +364,7 @@ export function Sales() {
 
         <Card>
           <CardContent className="pt-6">
-            <p className="text-sm font-medium text-muted-foreground">Weekly Volume</p>
+            <p className="text-sm font-medium text-muted-foreground">{t("sales.weeklyVolume")}</p>
             {summaryLoading ? (
               <Skeleton className="h-8 w-32 mt-1" />
             ) : (
@@ -370,10 +372,10 @@ export function Sales() {
                 {formatMoney(summary?.weeklyVolume)}
               </h3>
             )}
-            <p className="text-xs text-muted-foreground mt-2">Trailing 7 days</p>
+            <p className="text-xs text-muted-foreground mt-2">{t("sales.trailing7Days")}</p>
             {summaryError ? (
               <p className="text-xs text-destructive mt-2">
-                Volume summary unavailable.
+                {t("sales.volumeUnavailable")}
               </p>
             ) : null}
           </CardContent>
@@ -382,7 +384,7 @@ export function Sales() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm font-medium text-muted-foreground">
-              Average Order
+              {t("sales.averageOrder")}
             </p>
             {summaryLoading ? (
               <Skeleton className="h-8 w-32 mt-1" />
@@ -391,10 +393,10 @@ export function Sales() {
                 {formatMoney(summary?.averageOrderValue)}
               </h3>
             )}
-            <p className="text-xs text-muted-foreground mt-2">Per transaction</p>
+            <p className="text-xs text-muted-foreground mt-2">{t("sales.perTransaction")}</p>
             {summaryError ? (
               <p className="text-xs text-destructive mt-2">
-                Average order unavailable.
+                {t("sales.averageUnavailable")}
               </p>
             ) : null}
           </CardContent>
@@ -407,7 +409,7 @@ export function Sales() {
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-primary">Sharia Status</p>
+                <p className="text-sm font-medium text-primary">{t("sales.shariaStatus")}</p>
                 {summaryLoading ? (
                   <Skeleton className="h-6 w-20" />
                 ) : (
@@ -419,7 +421,7 @@ export function Sales() {
               <Skeleton className="h-4 w-32 mt-2" />
             ) : (
               <p className="text-xs text-muted-foreground">
-                Last audit:{" "}
+                {t("sales.lastAudit")}{" "}
                 {summary?.lastAuditDate
                   ? format(parseISO(summary.lastAuditDate), "MMM d, yyyy")
                   : "N/A"}
@@ -431,12 +433,12 @@ export function Sales() {
 
       <Card>
         <CardHeader className="pb-3 border-b border-border/50 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <CardTitle>Transactions</CardTitle>
+          <CardTitle>{t("sales.transactions")}</CardTitle>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search invoice or customer..."
+                placeholder={t("sales.searchInvoice")}
                 className="pl-9 bg-muted/50 border-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -447,11 +449,11 @@ export function Sales() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="settled">Settled</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="credit">Credit</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
+                <SelectItem value="all">{t("sales.allStatus")}</SelectItem>
+                <SelectItem value="settled">{t("sales.settled")}</SelectItem>
+                <SelectItem value="pending">{t("sales.pending")}</SelectItem>
+                <SelectItem value="credit">{t("sales.credit")}</SelectItem>
+                <SelectItem value="refunded">{t("sales.refunded")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -467,13 +469,13 @@ export function Sales() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow>
-                  <TableHead>Invoice ID</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Salesman</TableHead>
-                  <TableHead>Payment</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("sales.invoiceId")}</TableHead>
+                  <TableHead>{t("sales.dateTime")}</TableHead>
+                  <TableHead>{t("sales.customer")}</TableHead>
+                  <TableHead>{t("sales.salesman")}</TableHead>
+                  <TableHead>{t("sales.payment")}</TableHead>
+                  <TableHead className="text-right">{t("sales.total")}</TableHead>
+                  <TableHead>{t("sales.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -526,7 +528,7 @@ export function Sales() {
                 {!salesLoading && filteredSales.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      {salesError ? "Transactions unavailable." : "No transactions found."}
+                      {salesError ? t("sales.transactionsUnavailable") : t("sales.noTransactions")}
                     </TableCell>
                   </TableRow>
                 ) : null}

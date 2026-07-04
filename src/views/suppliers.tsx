@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
+import { useAppLocale } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -38,7 +39,8 @@ export function Suppliers() {
   const createSupplierReturn = useCreateSupplierReturn();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+  const { t } = useAppLocale();
+
   const { data: suppliers, isLoading: suppliersLoading, error: suppliersError } = useListSuppliers();
   const { data: returns, isLoading: returnsLoading, error: returnsError } = useListSupplierReturns();
 
@@ -119,15 +121,15 @@ export function Suppliers() {
       await queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getListSupplierReturnsQueryKey() });
       toast({
-        title: "Supplier added",
-        description: `${values.name} has been saved.`,
+        title: t("suppliers.supplierAdded"),
+        description: t("suppliers.supplierSaved").replace("{name}", values.name),
       });
       form.reset();
       setIsAddOpen(false);
     } catch {
       toast({
-        title: "Unable to save supplier",
-        description: "Please verify the fields and try again.",
+        title: t("suppliers.unableToSaveSupplier"),
+        description: t("suppliers.verifyFields"),
         variant: "destructive",
       });
     }
@@ -148,15 +150,15 @@ export function Suppliers() {
       });
       await queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() });
       toast({
-        title: "Supplier updated",
-        description: `${values.name} has been updated.`,
+        title: t("suppliers.supplierUpdated"),
+        description: t("suppliers.supplierUpdatedMsg").replace("{name}", values.name),
       });
       setIsEditOpen(false);
       setSelectedSupplier(null);
     } catch {
       toast({
-        title: "Unable to update supplier",
-        description: "Please check the details and try again.",
+        title: t("suppliers.unableToUpdateSupplier"),
+        description: t("suppliers.checkDetails"),
         variant: "destructive",
       });
     }
@@ -174,16 +176,16 @@ export function Suppliers() {
       });
       await queryClient.invalidateQueries({ queryKey: getListSupplierReturnsQueryKey() });
       toast({
-        title: "Return logged",
-        description: "Supplier return has been recorded.",
+        title: t("suppliers.returnLogged"),
+        description: t("suppliers.returnRecorded"),
       });
       setIsReturnOpen(false);
       setSelectedSupplier(null);
       returnForm.reset();
     } catch {
       toast({
-        title: "Unable to log return",
-        description: "Please review the form and try again.",
+        title: t("suppliers.unableToLogReturn"),
+        description: t("suppliers.reviewForm"),
         variant: "destructive",
       });
     }
@@ -199,20 +201,20 @@ export function Suppliers() {
       await queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getListSupplierReturnsQueryKey() });
       toast({
-        title: "Supplier deleted",
-        description: `${deleteTarget.name} has been removed.`,
+        title: t("suppliers.supplierDeleted"),
+        description: t("suppliers.supplierRemoved").replace("{name}", deleteTarget.name),
       });
       setDeleteTarget(null);
     } catch {
       toast({
-        title: "Unable to delete supplier",
-        description: "The supplier could not be removed.",
+        title: t("suppliers.unableToDeleteSupplier"),
+        description: t("suppliers.couldNotRemove"),
         variant: "destructive",
       });
     }
   };
 
-  const filteredSuppliers = suppliers?.filter(s => 
+  const filteredSuppliers = suppliers?.filter(s =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -220,8 +222,8 @@ export function Suppliers() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Supplier Management</h1>
-          <p className="text-muted-foreground mt-1">Manage vendor relationships, balances, and returns</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("suppliers.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("suppliers.description")}</p>
         </div>
       </div>
 
@@ -230,7 +232,7 @@ export function Suppliers() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Suppliers</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("suppliers.activeSuppliers")}</p>
                 {suppliersLoading ? <Skeleton className="h-8 w-24 mt-1" /> : (
                   <h3 className="text-3xl font-bold mt-1 text-primary">{suppliers?.length || 0}</h3>
                 )}
@@ -246,13 +248,13 @@ export function Suppliers() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Pending Returns</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("suppliers.totalPendingReturns")}</p>
                 {returnsLoading ? <Skeleton className="h-8 w-32 mt-1" /> : (
                   <h3 className="text-3xl font-bold mt-1">
                     {formatMoney((returns ?? []).filter(r => r.status === 'pending').reduce((sum, r) => sum + r.amount, 0))}
                   </h3>
                 )}
-                {returnsError ? <p className="text-xs text-destructive mt-2">Return totals unavailable.</p> : null}
+                {returnsError ? <p className="text-xs text-destructive mt-2">{t("suppliers.returnTotalsUnavailable")}</p> : null}
               </div>
               <div className="p-3 bg-amber-500/10 text-amber-500 rounded-lg">
                 <Undo2 className="w-6 h-6" />
@@ -265,9 +267,9 @@ export function Suppliers() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Edit Supplier</DialogTitle>
+            <DialogTitle>{t("suppliers.editSupplier")}</DialogTitle>
             <DialogDescription>
-              Update supplier name or contact email.
+              {t("suppliers.editSupplierDescription")}
             </DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
@@ -277,7 +279,7 @@ export function Suppliers() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier Name</FormLabel>
+                    <FormLabel>{t("suppliers.supplierName")}</FormLabel>
                     <FormControl>
                       <Input placeholder="Ali Traders" {...field} />
                     </FormControl>
@@ -290,7 +292,7 @@ export function Suppliers() {
                 name="contactEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
+                    <FormLabel>{t("suppliers.contactEmail")}</FormLabel>
                     <FormControl>
                       <Input placeholder="vendor@example.com" type="email" {...field} value={field.value ?? ""} />
                     </FormControl>
@@ -299,7 +301,7 @@ export function Suppliers() {
                 )}
               />
               <Button type="submit" className="w-full">
-                Update Supplier
+                {t("suppliers.saveSupplier")}
               </Button>
             </form>
           </Form>
@@ -309,9 +311,9 @@ export function Suppliers() {
       <Dialog open={isReturnOpen} onOpenChange={setIsReturnOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Log Supplier Return</DialogTitle>
+            <DialogTitle>{t("suppliers.logSupplierReturn")}</DialogTitle>
             <DialogDescription>
-              Record items returned back to the selected supplier.
+              {t("suppliers.logReturnDescription")}
             </DialogDescription>
           </DialogHeader>
           <Form {...returnForm}>
@@ -321,7 +323,7 @@ export function Suppliers() {
                 name="supplierId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier</FormLabel>
+                    <FormLabel>{t("suppliers.supplier")}</FormLabel>
                     <Select
                       value={String(field.value || "")}
                       onValueChange={(value) => field.onChange(Number(value))}
@@ -348,7 +350,7 @@ export function Suppliers() {
                 name="productName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Name</FormLabel>
+                    <FormLabel>{t("suppliers.productName")}</FormLabel>
                     <FormControl>
                       <Input placeholder="Returned product name" {...field} />
                     </FormControl>
@@ -362,7 +364,7 @@ export function Suppliers() {
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expected Amount (PKR)</FormLabel>
+                      <FormLabel>{t("suppliers.expectedAmountPkr")}</FormLabel>
                       <FormControl>
                         <Input type="number" min="0" step="0.01" {...field} />
                       </FormControl>
@@ -375,7 +377,7 @@ export function Suppliers() {
                   name="dueDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Due Date</FormLabel>
+                      <FormLabel>{t("suppliers.dueDate")}</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} value={field.value ?? ""} />
                       </FormControl>
@@ -385,7 +387,7 @@ export function Suppliers() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={createSupplierReturn.isPending}>
-                {createSupplierReturn.isPending ? "Saving..." : "Save Return"}
+                {createSupplierReturn.isPending ? t("inventory.saving") : t("suppliers.saveReturn")}
               </Button>
             </form>
           </Form>
@@ -395,14 +397,14 @@ export function Suppliers() {
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete supplier?</AlertDialogTitle>
+            <AlertDialogTitle>{t("suppliers.deleteSupplierTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove {deleteTarget?.name ?? "this supplier"} and its visible association from the panel.
+              {t("suppliers.deleteSupplierDescription").replace("{name}", deleteTarget?.name ?? "this supplier")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSupplier}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("inventory.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSupplier}>{t("inventory.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -410,22 +412,22 @@ export function Suppliers() {
       <Tabs defaultValue="suppliers" className="w-full">
         <TabsList className="grid w-[400px] grid-cols-2 bg-muted/50 p-1">
           <TabsTrigger value="suppliers" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
-            <Truck className="w-4 h-4 mr-2" /> Suppliers List
+            <Truck className="w-4 h-4 mr-2" /> {t("suppliers.suppliersList")}
           </TabsTrigger>
           <TabsTrigger value="returns" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
-            <Undo2 className="w-4 h-4 mr-2" /> Return Ledger
+            <Undo2 className="w-4 h-4 mr-2" /> {t("suppliers.returnLedger")}
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="suppliers" className="mt-4">
           <Card>
             <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Registered Suppliers</CardTitle>
+              <CardTitle className="text-lg">{t("suppliers.registeredSuppliers")}</CardTitle>
               <div className="flex items-center gap-3">
                 <div className="relative w-64">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search supplier name..."
+                    placeholder={t("suppliers.searchSupplier")}
                     className="pl-9 bg-muted/50 border-none h-9"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -434,14 +436,14 @@ export function Suppliers() {
                 <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm" className="h-9">
-                      <Plus className="w-4 h-4 mr-1" /> Add Supplier
+                      <Plus className="w-4 h-4 mr-1" /> {t("suppliers.addSupplier")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[520px]">
                     <DialogHeader>
-                      <DialogTitle>Add New Supplier</DialogTitle>
+                      <DialogTitle>{t("suppliers.addNewSupplier")}</DialogTitle>
                       <DialogDescription>
-                        Save a vendor with optional contact email.
+                        {t("suppliers.addSupplierDescription")}
                       </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
@@ -451,7 +453,7 @@ export function Suppliers() {
                           name="name"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Supplier Name</FormLabel>
+                              <FormLabel>{t("suppliers.supplierName")}</FormLabel>
                               <FormControl>
                                 <Input placeholder="Ali Traders" {...field} />
                               </FormControl>
@@ -464,7 +466,7 @@ export function Suppliers() {
                           name="contactEmail"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Contact Email</FormLabel>
+                              <FormLabel>{t("suppliers.contactEmail")}</FormLabel>
                               <FormControl>
                                 <Input placeholder="vendor@example.com" type="email" {...field} value={field.value ?? ""} />
                               </FormControl>
@@ -473,7 +475,7 @@ export function Suppliers() {
                           )}
                         />
                         <Button type="submit" className="w-full" disabled={createSupplier.isPending}>
-                          {createSupplier.isPending ? "Saving..." : "Save Supplier"}
+                          {createSupplier.isPending ? t("inventory.saving") : t("suppliers.saveSupplier")}
                         </Button>
                       </form>
                     </Form>
@@ -490,10 +492,10 @@ export function Suppliers() {
                 <Table>
                   <TableHeader className="bg-muted/30">
                     <TableRow>
-                      <TableHead>Supplier Name</TableHead>
-                      <TableHead>Contact Email</TableHead>
-                      <TableHead>Joined Date</TableHead>
-                      <TableHead className="text-right">Outstanding Balance</TableHead>
+                      <TableHead>{t("suppliers.supplierName")}</TableHead>
+                      <TableHead>{t("suppliers.contactEmail")}</TableHead>
+                      <TableHead>{t("suppliers.joinedDate")}</TableHead>
+                      <TableHead className="text-right">{t("suppliers.outstandingBalance")}</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -521,7 +523,7 @@ export function Suppliers() {
                                 setIsEditOpen(true);
                               }}
                             >
-                              <Pencil className="mr-1 h-4 w-4" /> Manage
+                              <Pencil className="mr-1 h-4 w-4" /> {t("suppliers.manage")}
                             </Button>
                             <Button
                               variant="ghost"
@@ -538,7 +540,7 @@ export function Suppliers() {
                     {(filteredSuppliers ?? []).length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                          {suppliersError ? "Suppliers unavailable." : `No suppliers found matching "${searchTerm}".`}
+                          {suppliersError ? t("suppliers.suppliersUnavailable") : t("suppliers.noSuppliersFound").replace("{search}", searchTerm)}
                         </TableCell>
                       </TableRow>
                     )}
@@ -548,16 +550,16 @@ export function Suppliers() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="returns" className="mt-4">
           <Card>
               <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Return Ledger</CardTitle>
-                  <CardDescription>Track items sent back to suppliers</CardDescription>
+                  <CardTitle className="text-lg">{t("suppliers.returnLedger")}</CardTitle>
+                  <CardDescription>{t("suppliers.returnLedgerDescription")}</CardDescription>
                 </div>
               <Button size="sm" variant="outline" className="h-9" onClick={() => setIsReturnOpen(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Log Return
+                <Plus className="w-4 h-4 mr-1" /> {t("suppliers.logReturn")}
               </Button>
               </CardHeader>
             <CardContent className="p-0">
@@ -569,12 +571,12 @@ export function Suppliers() {
                 <Table>
                   <TableHeader className="bg-muted/30">
                     <TableRow>
-                      <TableHead>Date Logged</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Product Returned</TableHead>
-                      <TableHead className="text-right">Amount Expected</TableHead>
+                      <TableHead>{t("suppliers.dateLogged")}</TableHead>
+                      <TableHead>{t("suppliers.supplier")}</TableHead>
+                      <TableHead>{t("suppliers.productReturned")}</TableHead>
+                      <TableHead className="text-right">{t("suppliers.amountExpected")}</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Due Date</TableHead>
+                      <TableHead>{t("suppliers.dueDate")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -585,11 +587,11 @@ export function Suppliers() {
                         <TableCell>{ret.productName}</TableCell>
                         <TableCell className="text-right font-medium">{formatMoney(ret.amount)}</TableCell>
                         <TableCell>
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             className={
-                              ret.status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 
-                              ret.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                              ret.status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                              ret.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
                               'bg-destructive/10 text-destructive border-destructive/20'
                             }
                           >
@@ -604,7 +606,7 @@ export function Suppliers() {
                     {(returns ?? []).length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          {returnsError ? "Return ledger unavailable." : "No return records found."}
+                          {returnsError ? t("suppliers.returnsUnavailable") : t("suppliers.noReturns")}
                         </TableCell>
                       </TableRow>
                     )}
@@ -618,4 +620,3 @@ export function Suppliers() {
     </div>
   );
 }
-

@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { formatMoney } from "@/lib/format";
 import { apiRequest } from "@/lib/api";
+import { useAppLocale } from "@/lib/i18n";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -32,6 +33,7 @@ const formSchema = z.object({
 type SalesmanFormValues = z.infer<typeof formSchema>;
 
 export function Salesmen() {
+  const { t } = useAppLocale();
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedSalesmanId, setSelectedSalesmanId] = useState<number | null>(null);
@@ -157,23 +159,23 @@ export function Salesmen() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sales Team</h1>
-          <p className="text-muted-foreground mt-1">Manage salesmen, targets, and commission rates</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("salesmen.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("salesmen.description")}</p>
         </div>
 
         <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={openCreateDialog}>
-          <Plus className="w-4 h-4 mr-2" /> Add Salesman
+          <Plus className="w-4 h-4 mr-2" /> {t("salesmen.addSalesman")}
         </Button>
       </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>{selectedSalesman ? "Edit Salesman" : "Add New Salesman"}</DialogTitle>
+            <DialogTitle>{selectedSalesman ? t("salesmen.editSalesman") : t("salesmen.addNewSalesman")}</DialogTitle>
             <DialogDescription>
               {selectedSalesman
-                ? "Update this salesman's profile, target, and commission settings."
-                : "Create a new salesman profile with target and commission settings."}
+                ? t("salesmen.editSalesmanDescription")
+                : t("salesmen.addSalesmanDescription")}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -184,7 +186,7 @@ export function Salesmen() {
                   name="name"
                   render={({ field }) => (
                     <FormItem className="col-span-3">
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>{t("salesmen.fullName")}</FormLabel>
                       <FormControl>
                         <Input placeholder="Ahmed Abdullah" {...field} />
                       </FormControl>
@@ -197,7 +199,7 @@ export function Salesmen() {
                   name="initials"
                   render={({ field }) => (
                     <FormItem className="col-span-1">
-                      <FormLabel>Initials</FormLabel>
+                      <FormLabel>{t("salesmen.initials")}</FormLabel>
                       <FormControl>
                         <Input placeholder="AA" {...field} maxLength={3} />
                       </FormControl>
@@ -211,7 +213,7 @@ export function Salesmen() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address (Optional)</FormLabel>
+                    <FormLabel>{t("salesmen.emailOptional")}</FormLabel>
                     <FormControl>
                       <Input placeholder="ahmed@example.com" type="email" {...field} value={field.value || ""} />
                     </FormControl>
@@ -225,7 +227,7 @@ export function Salesmen() {
                   name="target"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Monthly Target (PKR)</FormLabel>
+                      <FormLabel>{t("salesmen.monthlyTargetPkr")}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -238,7 +240,7 @@ export function Salesmen() {
                   name="commissionRate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Commission Rate (%)</FormLabel>
+                      <FormLabel>{t("salesmen.commissionPercent")}</FormLabel>
                       <FormControl>
                         <Input type="number" step="0.1" {...field} />
                       </FormControl>
@@ -248,7 +250,7 @@ export function Salesmen() {
                 />
               </div>
               <Button type="submit" className="w-full mt-4" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Saving..." : selectedSalesman ? "Update Salesman" : "Save Salesman"}
+                {createMutation.isPending ? t("inventory.saving") : selectedSalesman ? t("salesmen.updateSalesman") : t("salesmen.saveSalesman")}
               </Button>
             </form>
           </Form>
@@ -258,14 +260,14 @@ export function Salesmen() {
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete salesman?</AlertDialogTitle>
+            <AlertDialogTitle>{t("salesmen.deleteSalesmanTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove {deleteTarget?.name ?? "this salesman"} from the team. This action cannot be undone.
+              {t("salesmen.deleteSalesmanDescription").replace("{name}", deleteTarget?.name ?? "this salesman")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSalesman}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("inventory.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSalesman}>{t("inventory.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -275,7 +277,7 @@ export function Salesmen() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-primary">Top Performer</p>
+                <p className="text-sm font-medium text-primary">{t("salesmen.topPerformer")}</p>
                 {isLoading ? (
                   <Skeleton className="h-8 w-32 mt-1" />
                 ) : (
@@ -283,7 +285,7 @@ export function Salesmen() {
                     {salesmen && salesmen.length > 0 ? [...salesmen].sort((a, b) => b.totalSales - a.totalSales)[0].name : "N/A"}
                   </h3>
                 )}
-                {error ? <p className="text-xs text-destructive mt-2">Sales team data unavailable.</p> : null}
+                {error ? <p className="text-xs text-destructive mt-2">{t("salesmen.salesTeamUnavailable")}</p> : null}
               </div>
               <div className="p-3 bg-primary/20 text-primary rounded-lg">
                 <Trophy className="w-5 h-5" />
@@ -296,8 +298,8 @@ export function Salesmen() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Team Size</p>
-                {isLoading ? <Skeleton className="h-8 w-16 mt-1" /> : <h3 className="text-2xl font-bold mt-1">{salesmen?.length || 0} Members</h3>}
+                <p className="text-sm font-medium text-muted-foreground">{t("salesmen.totalTeamSize")}</p>
+                {isLoading ? <Skeleton className="h-8 w-16 mt-1" /> : <h3 className="text-2xl font-bold mt-1">{salesmen?.length || 0} {t("salesmen.members")}</h3>}
               </div>
               <div className="p-3 bg-muted text-muted-foreground rounded-lg">
                 <Users className="w-5 h-5" />
@@ -309,11 +311,11 @@ export function Salesmen() {
 
       <Card>
         <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-          <CardTitle>Directory</CardTitle>
+          <CardTitle>{t("salesmen.directory")}</CardTitle>
           <div className="relative w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name or initials..."
+              placeholder={t("salesmen.searchName")}
               className="pl-9 bg-muted/50 border-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -332,10 +334,10 @@ export function Salesmen() {
               <TableHeader className="bg-muted/30">
                 <TableRow>
                   <TableHead>Salesman</TableHead>
-                  <TableHead className="text-right">Monthly Target</TableHead>
-                  <TableHead className="w-[200px]">Progress</TableHead>
-                  <TableHead className="text-right">Commission Rate</TableHead>
-                  <TableHead className="text-right">Total Sales</TableHead>
+                  <TableHead className="text-right">{t("salesmen.monthlyTarget")}</TableHead>
+                  <TableHead className="w-[200px]">{t("salesmen.progress")}</TableHead>
+                  <TableHead className="text-right">{t("salesmen.commissionRate")}</TableHead>
+                  <TableHead className="text-right">{t("salesmen.totalSales")}</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -374,7 +376,7 @@ export function Salesmen() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="sm" className="h-8" onClick={() => openEditDialog(salesman.id)}>
-                            <Pencil className="w-4 h-4 mr-1" /> Edit
+                            <Pencil className="w-4 h-4 mr-1" /> {t("salesmen.edit")}
                           </Button>
                           <Button
                             variant="ghost"
@@ -382,7 +384,7 @@ export function Salesmen() {
                             className="h-8 text-destructive hover:text-destructive"
                             onClick={() => setDeleteTarget({ id: salesman.id, name: salesman.name })}
                           >
-                            <Trash2 className="w-4 h-4 mr-1" /> Delete
+                            <Trash2 className="w-4 h-4 mr-1" /> {t("inventory.delete")}
                           </Button>
                         </div>
                       </TableCell>
@@ -392,7 +394,7 @@ export function Salesmen() {
                 {(filteredSalesmen ?? []).length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      {error ? "Salesmen unavailable." : "No salesmen found matching your search."}
+                      {error ? t("salesmen.salesmenUnavailable") : t("salesmen.noSalesmenFound")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -404,4 +406,3 @@ export function Salesmen() {
     </div>
   );
 }
-

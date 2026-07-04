@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useState } from "react";
 import { useGetRevenueReport } from "@barakah/api-client-react";
@@ -13,8 +13,10 @@ import { format, parseISO } from "date-fns";
 import { Download, FileText, FileSpreadsheet, BarChart4 } from "lucide-react";
 import { GetRevenueReportPeriod } from "@barakah/api-client-react";
 import { formatMoney } from "@/lib/format";
+import { useAppLocale } from "@/lib/i18n";
 
 export function Reports() {
+  const { t } = useAppLocale();
   const [period, setPeriod] = useState<"week" | "month" | "year">("month");
   const [section, setSection] = useState("sales");
   
@@ -22,7 +24,7 @@ export function Reports() {
 
   const downloadCsv = () => {
     const rows = [
-      ["Date", "Invoice ID", "Customer", "Status", "Gross Sales", "Zakat Est. (2.5%)"],
+      [t("reports.date"), "Invoice ID", "Customer", "Status", t("reports.grossSales"), t("reports.zakatEst")],
       ...(report?.invoices ?? []).map((invoice) => [
         invoice.date,
         invoice.invoiceId,
@@ -47,21 +49,21 @@ export function Reports() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports Center</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("reports.title")}</h1>
           <p className="text-muted-foreground mt-1">
-            Financial analytics, auditing, and compliance records
-            <span className="ml-2 text-primary">• {section === "sales" ? "Sales Analysis" : section === "inventory" ? "Inventory Stock" : section === "returns" ? "Return Audits" : section === "zakat" ? "Zakat & Compliance" : "Salesman KPIs"}</span>
+            {t("reports.description")}
+            <span className="ml-2 text-primary">• {section === "sales" ? t("reports.salesAnalysis") : section === "inventory" ? t("reports.inventoryStock") : section === "returns" ? t("reports.returnAudits") : section === "zakat" ? t("reports.zakatCompliance") : t("reports.salesmanKpis")}</span>
           </p>
         </div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" size="sm" className="border-border" onClick={() => window.print()}>
-            <FileText className="w-4 h-4 mr-2" /> PDF
+            <FileText className="w-4 h-4 mr-2" /> {t("reports.pdf")}
           </Button>
           <Button type="button" variant="outline" size="sm" className="border-border" onClick={downloadCsv}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> {t("reports.excel")}
           </Button>
           <Button type="button" variant="outline" size="sm" className="border-border" onClick={downloadCsv}>
-            <Download className="w-4 h-4 mr-2" /> CSV
+            <Download className="w-4 h-4 mr-2" /> {t("reports.csv")}
           </Button>
         </div>
       </div>
@@ -71,19 +73,19 @@ export function Reports() {
           <Card className="bg-card">
             <div className="flex flex-col p-2">
               <Button type="button" variant="ghost" className={`justify-start ${section === "sales" ? "bg-secondary/50 font-medium" : "text-muted-foreground font-normal"}`} onClick={() => setSection("sales")}>
-                Sales Analysis
+                {t("reports.salesAnalysis")}
               </Button>
               <Button type="button" variant="ghost" className={`justify-start ${section === "inventory" ? "bg-secondary/50 font-medium" : "text-muted-foreground font-normal"}`} onClick={() => setSection("inventory")}>
-                Inventory Stock
+                {t("reports.inventoryStock")}
               </Button>
               <Button type="button" variant="ghost" className={`justify-start ${section === "returns" ? "bg-secondary/50 font-medium" : "text-muted-foreground font-normal"}`} onClick={() => setSection("returns")}>
-                Return Audits
+                {t("reports.returnAudits")}
               </Button>
               <Button type="button" variant="ghost" className={`justify-start ${section === "zakat" ? "bg-secondary/50 font-medium" : "text-muted-foreground font-normal"}`} onClick={() => setSection("zakat")}>
-                Zakat & Compliance
+                {t("reports.zakatCompliance")}
               </Button>
               <Button type="button" variant="ghost" className={`justify-start ${section === "salesmen" ? "bg-secondary/50 font-medium" : "text-muted-foreground font-normal"}`} onClick={() => setSection("salesmen")}>
-                Salesman KPIs
+                {t("reports.salesmanKpis")}
               </Button>
             </div>
           </Card>
@@ -93,20 +95,20 @@ export function Reports() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("reports.totalRevenue")}</p>
                 {isLoading ? <Skeleton className="h-8 w-40 mt-1" /> : (
                   <h3 className="text-3xl font-bold mt-1 text-primary">{formatMoney(report?.totalRevenue)}</h3>
                 )}
-                {error ? <p className="text-xs text-destructive mt-2">Revenue report unavailable.</p> : null}
+                {error ? <p className="text-xs text-destructive mt-2">{t("reports.reportUnavailable")}</p> : null}
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <p className="text-sm font-medium text-muted-foreground">Net Profit Estimate</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("reports.netProfit")}</p>
                 {isLoading ? <Skeleton className="h-8 w-40 mt-1" /> : (
                   <h3 className="text-3xl font-bold mt-1">{formatMoney(report?.netProfit)}</h3>
                 )}
-                {error ? <p className="text-xs text-destructive mt-2">Profit estimate unavailable.</p> : null}
+                {error ? <p className="text-xs text-destructive mt-2">{t("reports.profitUnavailable")}</p> : null}
               </CardContent>
             </Card>
           </div>
@@ -114,16 +116,16 @@ export function Reports() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg flex items-center gap-2">
-                <BarChart4 className="w-5 h-5 text-primary" /> Revenue Growth
+                <BarChart4 className="w-5 h-5 text-primary" /> {t("reports.revenueGrowth")}
               </CardTitle>
               <Select value={period} onValueChange={(v: "week" | "month" | "year") => setPeriod(v)}>
                 <SelectTrigger className="w-[120px] h-8 text-xs bg-muted/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
+                  <SelectItem value="week">{t("reports.thisWeek")}</SelectItem>
+                  <SelectItem value="month">{t("reports.thisMonth")}</SelectItem>
+                  <SelectItem value="year">{t("reports.thisYear")}</SelectItem>
                 </SelectContent>
               </Select>
             </CardHeader>
@@ -155,7 +157,7 @@ export function Reports() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Detailed Export Data</CardTitle>
+              <CardTitle className="text-lg">{t("reports.detailedExport")}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               {isLoading ? (
@@ -166,12 +168,12 @@ export function Reports() {
                 <Table>
                   <TableHeader className="bg-muted/30">
                     <TableRow>
-                      <TableHead>Date</TableHead>
+                      <TableHead>{t("reports.date")}</TableHead>
                       <TableHead>Invoice ID</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Gross Sales</TableHead>
-                      <TableHead className="text-right">Zakat Est. (2.5%)</TableHead>
+                      <TableHead className="text-right">{t("reports.grossSales")}</TableHead>
+                      <TableHead className="text-right">{t("reports.zakatEst")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -192,7 +194,7 @@ export function Reports() {
                     {!isLoading && (report?.invoices ?? []).length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          {error ? "Invoice data unavailable." : "No invoice data found."}
+                          {error ? t("reports.invoiceDataUnavailable") : t("reports.noInvoiceData")}
                         </TableCell>
                       </TableRow>
                     ) : null}
@@ -206,4 +208,3 @@ export function Reports() {
     </div>
   );
 }
-

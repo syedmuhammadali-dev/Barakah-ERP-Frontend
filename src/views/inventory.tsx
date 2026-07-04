@@ -29,8 +29,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { useAppLocale } from "@/lib/i18n";
 
 export function Inventory() {
+  const { t } = useAppLocale();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -211,33 +213,33 @@ export function Inventory() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Inventory Ledger</h1>
-          <p className="text-muted-foreground mt-1">Manage products, stock levels, and Amanat items</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("inventory.title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("inventory.description")}</p>
         </div>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="w-4 h-4 mr-2" /> Add Product
+              <Plus className="w-4 h-4 mr-2" /> {t("inventory.addProduct")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[640px]">
             <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
-              <DialogDescription>Save a new inventory item to the catalog.</DialogDescription>
+              <DialogTitle>{t("inventory.addNewProduct")}</DialogTitle>
+              <DialogDescription>{t("inventory.addNewDescription")}</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={onSubmit} className="space-y-4 pt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Product Name</FormLabel>
+                      <FormLabel>{t("inventory.productName")}</FormLabel>
                       <FormControl><Input placeholder="Lawn Suit" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="sku" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>SKU</FormLabel>
+                      <FormLabel>{t("inventory.sku")}</FormLabel>
                       <FormControl><Input placeholder="SKU-001" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -253,7 +255,7 @@ export function Inventory() {
                   )} />
                   <FormField control={form.control} name="brand" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Brand</FormLabel>
+                      <FormLabel>{t("inventory.brand")}</FormLabel>
                       <FormControl><Input placeholder="Barakah" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -262,14 +264,14 @@ export function Inventory() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="salePrice" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sale Price (PKR)</FormLabel>
+                      <FormLabel>{t("inventory.salePrice")}</FormLabel>
                       <FormControl><Input type="number" min="0" step="0.01" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="margin" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Margin %</FormLabel>
+                      <FormLabel>{t("inventory.marginPercent")}</FormLabel>
                       <FormControl><Input type="number" min="0" max="100" step="0.1" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -278,14 +280,14 @@ export function Inventory() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="stockLevel" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Stock Level</FormLabel>
+                      <FormLabel>{t("inventory.stockLevel")}</FormLabel>
                       <FormControl><Input type="number" min="0" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="maxStock" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Max Stock</FormLabel>
+                      <FormLabel>{t("inventory.maxStock")}</FormLabel>
                       <FormControl><Input type="number" min="0" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -297,7 +299,7 @@ export function Inventory() {
                       <FormControl>
                         <input type="checkbox" checked={field.value} onChange={field.onChange} />
                       </FormControl>
-                      <Label>Amanat Item</Label>
+                      <Label>{t("inventory.amanatItem")}</Label>
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="isReturnable" render={({ field }) => (
@@ -305,12 +307,12 @@ export function Inventory() {
                       <FormControl>
                         <input type="checkbox" checked={field.value} onChange={field.onChange} />
                       </FormControl>
-                      <Label>Returnable</Label>
+                      <Label>{t("inventory.returnable")}</Label>
                     </FormItem>
                   )} />
                 </div>
                 <Button type="submit" className="w-full" disabled={createProduct.isPending}>
-                  {createProduct.isPending ? "Saving..." : "Save Product"}
+                  {createProduct.isPending ? t("inventory.saving") : t("inventory.saveProduct")}
                 </Button>
               </form>
             </Form>
@@ -321,9 +323,9 @@ export function Inventory() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[640px]">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>{t("inventory.editProductTitle")}</DialogTitle>
             <DialogDescription>
-              Update product details, prices, and stock levels.
+              {t("inventory.editProductDescription")}
             </DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
@@ -331,14 +333,14 @@ export function Inventory() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={editForm.control} name="name" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product Name</FormLabel>
+                    <FormLabel>{t("inventory.productName")}</FormLabel>
                     <FormControl><Input placeholder="Lawn Suit" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={editForm.control} name="salePrice" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Sale Price (PKR)</FormLabel>
+                    <FormLabel>{t("inventory.salePrice")}</FormLabel>
                     <FormControl><Input type="number" min="0" step="0.01" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -347,14 +349,14 @@ export function Inventory() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={editForm.control} name="margin" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Margin %</FormLabel>
+                    <FormLabel>{t("inventory.marginPercent")}</FormLabel>
                     <FormControl><Input type="number" min="0" max="100" step="0.1" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={editForm.control} name="stockLevel" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock Level</FormLabel>
+                    <FormLabel>{t("inventory.stockLevel")}</FormLabel>
                     <FormControl><Input type="number" min="0" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -363,14 +365,14 @@ export function Inventory() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={editForm.control} name="maxStock" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Max Stock</FormLabel>
+                    <FormLabel>{t("inventory.maxStock")}</FormLabel>
                     <FormControl><Input type="number" min="0" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={editForm.control} name="brand" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Brand</FormLabel>
+                    <FormLabel>{t("inventory.brand")}</FormLabel>
                     <FormControl><Input disabled {...field} value={field.value || ""} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -382,7 +384,7 @@ export function Inventory() {
                     <FormControl>
                       <input type="checkbox" checked={field.value} onChange={field.onChange} />
                     </FormControl>
-                    <Label>Amanat Item</Label>
+                    <Label>{t("inventory.amanatItem")}</Label>
                   </FormItem>
                 )} />
                 <FormField control={editForm.control} name="isReturnable" render={({ field }) => (
@@ -390,12 +392,12 @@ export function Inventory() {
                     <FormControl>
                       <input type="checkbox" checked={field.value} onChange={field.onChange} />
                     </FormControl>
-                    <Label>Returnable</Label>
+                    <Label>{t("inventory.returnable")}</Label>
                   </FormItem>
                 )} />
               </div>
               <Button type="submit" className="w-full" disabled={updateProduct.isPending}>
-                {updateProduct.isPending ? "Saving..." : "Update Product"}
+                {updateProduct.isPending ? t("inventory.saving") : t("inventory.updateProduct")}
               </Button>
             </form>
           </Form>
@@ -405,14 +407,14 @@ export function Inventory() {
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Product Snapshot</DialogTitle>
+            <DialogTitle>{t("inventory.productSnapshot")}</DialogTitle>
             <DialogDescription>
               Current inventory details for {selectedProduct?.name ?? "this product"}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-4 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">SKU</span>
+              <span className="text-muted-foreground">{t("inventory.sku")}</span>
               <span className="font-medium">{selectedProduct?.sku ?? "N/A"}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -424,7 +426,7 @@ export function Inventory() {
               <span className="font-medium">{selectedProduct?.stockLevel ?? 0} / {selectedProduct?.maxStock ?? 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Sale Price</span>
+              <span className="text-muted-foreground">{t("inventory.salePrice")}</span>
               <span className="font-medium">{formatMoney(selectedProduct?.salePrice)}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -441,14 +443,14 @@ export function Inventory() {
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete product?</AlertDialogTitle>
+            <AlertDialogTitle>{t("inventory.deleteProductTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               This will remove {deleteTarget?.name ?? "this product"} from inventory. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProduct}>Delete</AlertDialogAction>
+            <AlertDialogCancel>{t("inventory.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteProduct}>{t("inventory.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -458,7 +460,7 @@ export function Inventory() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Inventory Value</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("inventory.totalValue")}</p>
                 {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : (
                   <h3 className="text-2xl font-bold mt-1 text-primary">{formatMoney(summary?.totalValue)}</h3>
                 )}
@@ -470,28 +472,28 @@ export function Inventory() {
             </div>
             {summaryLoading ? <Skeleton className="h-4 w-24 mt-4" /> : (
               <p className="text-xs text-muted-foreground mt-4">
-                <span className={summary?.totalValueChange && summary.totalValueChange >= 0 ? "text-green-500" : "text-red-500"}>
-                  {summary?.totalValueChange && summary.totalValueChange > 0 ? "+" : ""}{summary?.totalValueChange}%
-                </span> vs last month
+                <span className={summary?.totalValueChange != null && summary.totalValueChange >= 0 ? "text-green-500" : "text-red-500"}>
+                  {summary?.totalValueChange != null && summary.totalValueChange > 0 ? "+" : ""}{summary?.totalValueChange}%
+                </span> {t("inventory.vsLastMonth")}
               </p>
             )}
           </CardContent>
         </Card>
 
-        <Card className={summary?.lowStockCount && summary.lowStockCount > 0 ? "border-destructive/30" : ""}>
+        <Card className={summary?.lowStockCount != null && summary.lowStockCount > 0 ? "border-destructive/30" : ""}>
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Low Stock Alerts</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("inventory.lowStock")}</p>
                 {summaryLoading ? <Skeleton className="h-8 w-24 mt-1" /> : (
                   <h3 className="text-2xl font-bold mt-1">{summary?.lowStockCount} Items</h3>
                 )}
               </div>
-              <div className={`p-3 rounded-lg ${summary?.lowStockCount && summary.lowStockCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
+              <div className={`p-3 rounded-lg ${summary?.lowStockCount != null && summary.lowStockCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
                 <AlertTriangle className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-4">Requires attention</p>
+            <p className="text-xs text-muted-foreground mt-4">{t("inventory.requiresAttention")}</p>
           </CardContent>
         </Card>
 
@@ -499,7 +501,7 @@ export function Inventory() {
           <CardContent className="pt-6">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Returns</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("inventory.pendingReturns")}</p>
                 {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : (
                   <h3 className="text-2xl font-bold mt-1">{formatMoney(summary?.pendingReturnsValue)}</h3>
                 )}
@@ -518,11 +520,11 @@ export function Inventory() {
 
       <Card>
         <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-          <CardTitle>Product Catalog</CardTitle>
+          <CardTitle>{t("inventory.productCatalog")}</CardTitle>
           <div className="relative w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search SKU or name..."
+              placeholder={t("inventory.searchSku")}
               className="pl-9 bg-muted/50 border-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -538,12 +540,12 @@ export function Inventory() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow>
-                  <TableHead className="w-[100px]">SKU</TableHead>
-                  <TableHead>Product Details</TableHead>
-                  <TableHead>Price & Margin</TableHead>
-                  <TableHead className="w-[200px]">Stock Level</TableHead>
+                  <TableHead className="w-[100px]">{t("inventory.sku")}</TableHead>
+                  <TableHead>{t("inventory.productDetails")}</TableHead>
+                  <TableHead>{t("inventory.priceMargin")}</TableHead>
+                  <TableHead className="w-[200px]">{t("inventory.stockLevel")}</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{t("inventory.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -559,12 +561,12 @@ export function Inventory() {
                           <span className="text-xs text-muted-foreground">{product.category}</span>
                           {product.isAmanat && (
                             <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 bg-primary/5 text-primary border-primary/20">
-                              <ShieldCheck className="w-3 h-3 mr-1" /> Amanat
+                              <ShieldCheck className="w-3 h-3 mr-1" /> {t("inventory.amanatItem")}
                             </Badge>
                           )}
                           {product.isReturnable && (
                             <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 bg-secondary/20 text-secondary-foreground border-secondary/30">
-                              <Undo2 className="w-3 h-3 mr-1" /> Returnable
+                              <Undo2 className="w-3 h-3 mr-1" /> {t("inventory.returnable")}
                             </Badge>
                           )}
                         </div>
@@ -606,19 +608,19 @@ export function Inventory() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openEditProduct(product)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Edit Product
+                              <Pencil className="mr-2 h-4 w-4" /> {t("inventory.editProduct")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openEditProduct(product)}>
-                              <Pencil className="mr-2 h-4 w-4" /> Adjust Stock
+                              <Pencil className="mr-2 h-4 w-4" /> {t("inventory.adjustStock")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openHistory(product)}>
-                              <History className="mr-2 h-4 w-4" /> View History
+                              <History className="mr-2 h-4 w-4" /> {t("inventory.viewHistory")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive"
                               onClick={() => setDeleteTarget({ id: product.id, name: product.name })}
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              <Trash2 className="mr-2 h-4 w-4" /> {t("inventory.delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -629,7 +631,7 @@ export function Inventory() {
                 {!productsLoading && (products ?? []).length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      {productsError ? "Products unavailable." : "No products found."}
+                      {productsError ? t("inventory.productsUnavailable") : t("inventory.noProducts")}
                     </TableCell>
                   </TableRow>
                 ) : null}

@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useGetDashboardOverview, useGetRevenueReport, useGetInventoryDistribution, useGetTopProducts, useListAuditLog, useListSales } from "@barakah/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { TrendingUp, Package, AlertTriangle, Calculator, CalendarClock } from "lucide-react";
 import { formatMoney, formatPercent } from "@/lib/format";
+import { useAppLocale } from "@/lib/i18n";
 
 export function Dashboard() {
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useGetDashboardOverview();
@@ -20,10 +21,12 @@ export function Dashboard() {
 
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
+  const { t } = useAppLocale();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("dashboard.title")}</h1>
         <Badge variant="outline" className="px-3 py-1 font-mono text-sm border-primary/20 bg-primary/10 text-primary">
           <CalendarClock className="w-4 h-4 mr-2 inline" />
           {format(new Date(), 'EEEE, MMMM d, yyyy')}
@@ -33,7 +36,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("dashboard.todaySales")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -41,11 +44,11 @@ export function Dashboard() {
               <>
                 <div className="text-2xl font-bold text-primary">{formatMoney(overview?.todaySales)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  <span className={overview?.todaySalesChange && overview.todaySalesChange >= 0 ? "text-green-500" : "text-red-500"}>
-                    {overview?.todaySalesChange && overview.todaySalesChange > 0 ? "+" : ""}{formatPercent(overview?.todaySalesChange ?? 0, 0)}
-                  </span> from yesterday
+                  <span className={overview?.todaySalesChange != null && overview.todaySalesChange >= 0 ? "text-green-500" : "text-red-500"}>
+                    {overview?.todaySalesChange != null && overview.todaySalesChange >= 0 ? "+" : ""}{formatPercent(overview?.todaySalesChange ?? 0, 0)}
+                  </span> {t("dashboard.fromYesterday")}
                 </p>
-                {overviewError ? <p className="mt-2 text-xs text-destructive">Sales summary unavailable.</p> : null}
+                {overviewError ? <p className="mt-2 text-xs text-destructive">{t("dashboard.salesSummaryUnavailable")}</p> : null}
               </>
             )}
           </CardContent>
@@ -53,7 +56,7 @@ export function Dashboard() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Zakat Due</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("dashboard.zakatDue")}</CardTitle>
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -61,9 +64,9 @@ export function Dashboard() {
               <>
                 <div className="text-2xl font-bold text-primary">{formatMoney(overview?.zakatDue)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Due in {overview?.zakatNextDays} days
+                  {t("dashboard.dueInLabel")} {overview?.zakatNextDays ?? 0} {t("dashboard.days")}
                 </p>
-                {overviewError ? <p className="mt-2 text-xs text-destructive">Zakat summary unavailable.</p> : null}
+                {overviewError ? <p className="mt-2 text-xs text-destructive">{t("dashboard.zakatSummaryUnavailable")}</p> : null}
               </>
             )}
           </CardContent>
@@ -71,7 +74,7 @@ export function Dashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inventory Value</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("dashboard.inventoryValue")}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -79,27 +82,27 @@ export function Dashboard() {
               <>
                 <div className="text-2xl font-bold">{formatMoney(overview?.inventoryValue)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {overview?.inventoryUnits} units across all stores
+                  {overview?.inventoryUnits ?? 0} {t("dashboard.unitsAcrossStores")}
                 </p>
-                {overviewError ? <p className="mt-2 text-xs text-destructive">Inventory summary unavailable.</p> : null}
+                {overviewError ? <p className="mt-2 text-xs text-destructive">{t("dashboard.inventorySummaryUnavailable")}</p> : null}
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card className={overview?.lowStockCount && overview.lowStockCount > 0 ? "border-destructive/50 bg-destructive/5" : ""}>
+        <Card className={overview?.lowStockCount != null && overview.lowStockCount > 0 ? "border-destructive/50 bg-destructive/5" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className={`h-4 w-4 ${overview?.lowStockCount && overview.lowStockCount > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+            <CardTitle className="text-sm font-medium">{t("dashboard.lowStockAlerts")}</CardTitle>
+            <AlertTriangle className={`h-4 w-4 ${overview?.lowStockCount != null && overview.lowStockCount > 0 ? "text-destructive" : "text-muted-foreground"}`} />
           </CardHeader>
           <CardContent>
             {overviewLoading ? <Skeleton className="h-8 w-24" /> : (
               <>
-                <div className="text-2xl font-bold">{overview?.lowStockCount} items</div>
+                <div className="text-2xl font-bold">{overview?.lowStockCount ?? 0} {t("dashboard.items")}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Requires immediate reorder
+                  {t("dashboard.requiresReorder")}
                 </p>
-                {overviewError ? <p className="mt-2 text-xs text-destructive">Alert status unavailable.</p> : null}
+                {overviewError ? <p className="mt-2 text-xs text-destructive">{t("dashboard.alertStatusUnavailable")}</p> : null}
               </>
             )}
           </CardContent>
@@ -109,7 +112,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="col-span-2">
           <CardHeader>
-            <CardTitle>Revenue Growth</CardTitle>
+            <CardTitle>{t("dashboard.revenueGrowth")}</CardTitle>
           </CardHeader>
           <CardContent className="pl-0">
             {revenueLoading ? <Skeleton className="h-[300px] w-full ml-6" /> : (
@@ -126,7 +129,7 @@ export function Dashboard() {
                     <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                {revenueError ? <p className="mt-2 text-xs text-destructive px-6">Revenue chart unavailable.</p> : null}
+                {revenueError ? <p className="mt-2 text-xs text-destructive px-6">{t("dashboard.revenueChartUnavailable")}</p> : null}
               </div>
             )}
           </CardContent>
@@ -134,7 +137,7 @@ export function Dashboard() {
         
         <Card>
           <CardHeader>
-            <CardTitle>Category Distribution</CardTitle>
+            <CardTitle>{t("dashboard.categoryDistribution")}</CardTitle>
           </CardHeader>
           <CardContent>
             {distributionLoading ? <Skeleton className="h-[300px] w-full" /> : (
@@ -168,7 +171,7 @@ export function Dashboard() {
                     </div>
                   ))}
                 </div>
-                {distributionError ? <p className="mt-2 text-xs text-destructive">Category distribution unavailable.</p> : null}
+                {distributionError ? <p className="mt-2 text-xs text-destructive">{t("dashboard.categoryDistributionUnavailable")}</p> : null}
               </div>
             )}
           </CardContent>
@@ -178,17 +181,17 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
+            <CardTitle>{t("dashboard.recentTransactions")}</CardTitle>
           </CardHeader>
           <CardContent>
             {salesLoading ? <Skeleton className="h-[250px] w-full" /> : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Invoice</TableHead>
-                    <TableHead>Salesman</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t("dashboard.invoice")}</TableHead>
+                    <TableHead>{t("dashboard.salesman")}</TableHead>
+                    <TableHead>{t("dashboard.amount")}</TableHead>
+                    <TableHead>{t("dashboard.status")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -207,7 +210,7 @@ export function Dashboard() {
                   {!salesLoading && (recentSales ?? []).length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        {salesError ? "Transactions unavailable." : "No transactions found."}
+                        {salesError ? t("dashboard.transactionsUnavailable") : t("dashboard.noTransactions")}
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -219,17 +222,17 @@ export function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top Products</CardTitle>
+            <CardTitle>{t("dashboard.topProducts")}</CardTitle>
           </CardHeader>
           <CardContent>
             {topProductsLoading ? <Skeleton className="h-[250px] w-full" /> : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Units Sold</TableHead>
-                    <TableHead className="text-right">Trend</TableHead>
+                    <TableHead>{t("dashboard.product")}</TableHead>
+                    <TableHead>{t("dashboard.category")}</TableHead>
+                    <TableHead className="text-right">{t("dashboard.unitsSold")}</TableHead>
+                    <TableHead className="text-right">{t("dashboard.trend")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -248,7 +251,7 @@ export function Dashboard() {
                   {!topProductsLoading && (topProducts ?? []).length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                        {topProductsError ? "Top products unavailable." : "No products found."}
+                        {topProductsError ? t("dashboard.topProductsUnavailable") : t("dashboard.noTopProducts")}
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -262,7 +265,7 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Audit Log</CardTitle>
+            <CardTitle>{t("dashboard.auditLog")}</CardTitle>
           </CardHeader>
           <CardContent>
             {auditLoading ? (
@@ -280,7 +283,7 @@ export function Dashboard() {
                 ))}
                 {!auditLoading && (auditLog ?? []).length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    {auditError ? "Audit log unavailable." : "No audit entries yet."}
+                    {auditError ? t("dashboard.auditLogUnavailable") : t("dashboard.noAuditEntries")}
                   </p>
                 ) : null}
               </div>
@@ -291,4 +294,3 @@ export function Dashboard() {
     </div>
   );
 }
-
