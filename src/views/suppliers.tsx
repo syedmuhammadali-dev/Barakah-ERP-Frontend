@@ -46,6 +46,7 @@ export function Suppliers() {
 
   const supplierSchema = useMemo(() => z.object({
     name: z.string().min(2, "Supplier name is required"),
+    companyName: z.string().optional().or(z.literal("")),
     contactEmail: z.string().email("Invalid email").optional().or(z.literal("")),
   }), []);
 
@@ -55,6 +56,7 @@ export function Suppliers() {
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
+      companyName: "",
       contactEmail: "",
     },
   });
@@ -63,6 +65,7 @@ export function Suppliers() {
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
+      companyName: "",
       contactEmail: "",
     },
   });
@@ -93,6 +96,7 @@ export function Suppliers() {
 
     editForm.reset({
       name: selectedSupplier.name,
+      companyName: (selectedSupplier as any).companyName ?? "",
       contactEmail: selectedSupplier.contactEmail ?? "",
     });
   }, [editForm, isEditOpen, selectedSupplier]);
@@ -115,6 +119,7 @@ export function Suppliers() {
       await createSupplier.mutateAsync({
         data: {
           name: values.name,
+          companyName: values.companyName || undefined,
           contactEmail: values.contactEmail || undefined,
         },
       });
@@ -145,6 +150,7 @@ export function Suppliers() {
         method: "PATCH",
         body: JSON.stringify({
           name: values.name,
+          companyName: values.companyName || null,
           contactEmail: values.contactEmail || null,
         }),
       });
@@ -282,6 +288,19 @@ export function Suppliers() {
                     <FormLabel>{t("suppliers.supplierName")}</FormLabel>
                     <FormControl>
                       <Input placeholder="Ali Traders" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Alibaba Group" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -463,6 +482,19 @@ export function Suppliers() {
                         />
                         <FormField
                           control={form.control}
+                          name="companyName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Alibaba Group" {...field} value={field.value ?? ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
                           name="contactEmail"
                           render={({ field }) => (
                             <FormItem>
@@ -493,6 +525,7 @@ export function Suppliers() {
                   <TableHeader className="bg-muted/30">
                     <TableRow>
                       <TableHead>{t("suppliers.supplierName")}</TableHead>
+                      <TableHead>Company</TableHead>
                       <TableHead>{t("suppliers.contactEmail")}</TableHead>
                       <TableHead>{t("suppliers.joinedDate")}</TableHead>
                       <TableHead className="text-right">{t("suppliers.outstandingBalance")}</TableHead>
@@ -508,6 +541,7 @@ export function Suppliers() {
                             {supplier.name}
                           </div>
                         </TableCell>
+                        <TableCell className="text-muted-foreground">{(supplier as any).companyName || "N/A"}</TableCell>
                         <TableCell className="text-muted-foreground">{supplier.contactEmail || "N/A"}</TableCell>
                         <TableCell className="text-sm">{format(parseISO(supplier.createdAt), 'MMM d, yyyy')}</TableCell>
                         <TableCell className={`text-right font-medium ${supplier.totalBalance > 0 ? "text-destructive" : ""}`}>
@@ -539,7 +573,7 @@ export function Suppliers() {
                     ))}
                     {(filteredSuppliers ?? []).length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           {suppliersError ? t("suppliers.suppliersUnavailable") : t("suppliers.noSuppliersFound").replace("{search}", searchTerm)}
                         </TableCell>
                       </TableRow>

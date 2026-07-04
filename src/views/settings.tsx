@@ -1,14 +1,15 @@
- "use client";
+"use client";
 
-import { useEffect } from "react";
-import { useGetSettings, useUpdateSettings } from "@barakah/api-client-react";
+import { useEffect, useState } from "react";
+import { useGetSettings, useUpdateSettings, useGetBusinessProfile, useUpdateBusinessProfile } from "@barakah/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@barakah/auth-web";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Store, Shield, Bell, MoonStar, MapPin, Globe } from "lucide-react";
+import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -18,7 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
+  email: z.string().email("Valid email is required"),
   shopName: z.string().min(2, "Shop name is required"),
+  phone: z.string().optional(),
   contactEmail: z.string().email("Valid email is required"),
   address: z.string().optional(),
   baseCurrency: z.string().min(1),
@@ -34,14 +37,23 @@ const formSchema = z.object({
 export function Settings() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
   
-  const { data: settings, isLoading, error } = useGetSettings();
+  const { data: settings, isLoading: settingsLoading, error: settingsError } = useGetSettings();
+  const { data: profile, isLoading: profileLoading, error: profileError } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
   const updateMutation = useUpdateSettings();
+  const updateProfileMutation = useUpdateBusinessProfile();
+
+  const isLoading = settingsLoading || profileLoading;
+  const error = settingsError || profileError;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      email: "",
       shopName: "",
+      phone: "",
       contactEmail: "",
       address: "",
       baseCurrency: "PKR",
@@ -56,40 +68,84 @@ export function Settings() {
   });
 
   useEffect(() => {
-    if (settings) {
+    if (!isLoading) {
       form.reset({
-        shopName: settings.shopName,
-        contactEmail: settings.contactEmail,
-        address: settings.address,
-        baseCurrency: settings.baseCurrency,
-        timezone: settings.timezone,
-        vatRate: settings.vatRate,
-        nisabThreshold: settings.nisabThreshold,
-        islamicModeEnabled: settings.islamicModeEnabled,
-        emailNotifications: settings.emailNotifications,
-        pushNotifications: settings.pushNotifications,
-        smsAlerts: settings.smsAlerts,
+        email: user?.email || "",
+        shopName: profile?.businessName || settings?.shopName || "",
+        phone: profile?.phone || "",
+        contactEmail: settings?.contactEmail || "",
+        address: settings?.address || "",
+        baseCurrency: settings?.baseCurrency || "PKR",
+        timezone: settings?.timezone || "Asia/Riyadh",
+        vatRate: settings?.vatRate ?? 15,
+        nisabThreshold: settings?.nisabThreshold ?? 2200,
+        islamicModeEnabled: settings?.islamicModeEnabled ?? true,
+        emailNotifications: settings?.emailNotifications ?? true,
+        pushNotifications: settings?.pushNotifications ?? true,
+        smsAlerts: settings?.smsAlerts ?? false,
       });
     }
-  }, [settings, form]);
+  }, [settings, profile, user, isLoading, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    updateMutation.mutate({ data: values }, {
-      onSuccess: () => {
-        toast({
-          title: "Settings Updated",
-          description: "Your configuration changes have been saved.",
-        });
-        queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      },
-      onError: () => {
-        toast({
-          title: "Update Failed",
-          description: "An error occurred while saving settings.",
-          variant: "destructive",
-        });
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setSaving(true);
+
+    try {
+      const promises: Promise<unknown>[] = [];
+
+      if (user?.email !== values.email && values.email) {
+        promises.push(
+          fetch("/api/auth/me", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: values.email }),
+            credentials: "include",
+          }),
+        );
       }
-    });
+
+      if (profile && (profile.businessName !== values.shopName || profile.phone !== values.phone)) {
+        promises.push(
+          updateProfileMutation.mutateAsync({ data: { businessName: values.shopName, businessType: profile.businessType, phone: values.phone || null } }),
+        );
+      }
+
+      promises.push(
+        updateMutation.mutateAsync({ data: {
+          shopName: values.shopName,
+          contactEmail: values.contactEmail,
+          address: values.address,
+          baseCurrency: values.baseCurrency,
+          timezone: values.timezone,
+          vatRate: values.vatRate,
+          nisabThreshold: values.nisabThreshold,
+          islamicModeEnabled: values.islamicModeEnabled,
+          emailNotifications: values.emailNotifications,
+          pushNotifications: values.pushNotifications,
+          smsAlerts: values.smsAlerts,
+        } }),
+      );
+
+      await Promise.all(promises);
+
+      toast({
+        title: "Settings Updated",
+        description: "Your configuration changes have been saved.",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["businessProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["businessProfile", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    } catch {
+      toast({
+        title: "Update Failed",
+        description: "An error occurred while saving settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -97,7 +153,7 @@ export function Settings() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Shop Configuration</h1>
         <p className="text-muted-foreground mt-1">Manage store identity, compliance, and localization</p>
-        {error ? <p className="mt-2 text-sm text-destructive">Settings could not be loaded. You can still edit and save the form.</p> : null}
+        {error ? <p className="mt-2 text-sm text-destructive">Some data could not be loaded. You can still edit and save the form.</p> : null}
       </div>
 
       <Form {...form}>
@@ -111,35 +167,46 @@ export function Settings() {
             </div>
             <Card className="md:col-span-3">
               <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="w-24 h-24 bg-muted rounded-lg border-2 border-dashed border-border flex items-center justify-center flex-col text-muted-foreground cursor-pointer hover:bg-muted/80 transition-colors">
-                    <span className="text-2xl font-bold font-serif opacity-30">B</span>
-                    <span className="text-[10px] mt-2">Upload Logo</span>
-                  </div>
-                  <div className="flex-1 space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="shopName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Shop Name</FormLabel>
-                          <FormControl>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="shopName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Shop Name</FormLabel>
+                        <FormControl>
                           <Input placeholder="Barakah Retail" {...field} disabled={isLoading} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input className="pl-9" placeholder="+92 300 1234567" {...field} disabled={isLoading} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="contactEmail"
+                    name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Email</FormLabel>
+                        <FormLabel>Account Email</FormLabel>
+                        <FormDescription className="text-xs">Login email used at signup</FormDescription>
                         <FormControl>
                           <Input type="email" placeholder="admin@barakah.com" {...field} disabled={isLoading} />
                         </FormControl>
@@ -147,6 +214,23 @@ export function Settings() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="contactEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Email</FormLabel>
+                        <FormDescription className="text-xs">Public email for your customers</FormDescription>
+                        <FormControl>
+                          <Input type="email" placeholder="contact@barakah.com" {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}
                     name="address"
@@ -274,7 +358,12 @@ export function Settings() {
                         <SelectContent>
                           <SelectItem value="Asia/Riyadh">Asia/Riyadh (AST)</SelectItem>
                           <SelectItem value="Asia/Dubai">Asia/Dubai (GST)</SelectItem>
+                          <SelectItem value="Asia/Karachi">Asia/Karachi (PKT)</SelectItem>
+                          <SelectItem value="Asia/Kolkata">Asia/Kolkata (IST)</SelectItem>
+                          <SelectItem value="Asia/Dhaka">Asia/Dhaka (BST)</SelectItem>
+                          <SelectItem value="Asia/Kabul">Asia/Kabul (AFT)</SelectItem>
                           <SelectItem value="Europe/London">Europe/London (GMT)</SelectItem>
+                          <SelectItem value="UTC">UTC</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -361,9 +450,9 @@ export function Settings() {
                   type="submit" 
                   size="lg" 
                   className="font-bold min-w-[150px]"
-                  disabled={updateMutation.isPending || isLoading}
+                  disabled={saving || isLoading}
                 >
-                  {updateMutation.isPending ? "Saving..." : "Save Configuration"}
+                  {saving ? "Saving..." : "Save Configuration"}
                 </Button>
               </CardFooter>
             </Card>

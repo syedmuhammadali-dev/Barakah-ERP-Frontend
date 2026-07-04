@@ -206,6 +206,8 @@ export interface ProductInput {
   isReturnable?: boolean;
   /** @nullable */
   deadline?: string | null;
+  /** @nullable */
+  salesmanName?: string | null;
 }
 
 export interface ProductUpdate {
@@ -267,6 +269,8 @@ export interface Sale {
   salesmanName?: string | null;
   /** @nullable */
   salesmanInitials?: string | null;
+  /** @nullable */
+  productName?: string | null;
   paymentMethod: SalePaymentMethod;
   discount: number;
   status: SaleStatus;
@@ -294,6 +298,8 @@ export interface SaleInput {
   paymentMethod: SaleInputPaymentMethod;
   discount?: number;
   total: number;
+  /** @nullable */
+  productName?: string | null;
 }
 
 /**
@@ -332,6 +338,8 @@ export interface Salesman {
   initials: string;
   /** @nullable */
   email?: string | null;
+  /** @nullable */
+  profileImageUrl?: string | null;
   target: number;
   commissionRate: number;
   totalSales: number;
@@ -343,24 +351,30 @@ export interface SalesmanInput {
   initials: string;
   /** @nullable */
   email?: string | null;
+  /** @nullable */
+  profileImageUrl?: string | null;
   target: number;
   commissionRate: number;
-}
-
-export interface Supplier {
-  id: number;
-  name: string;
-  /** @nullable */
-  contactEmail?: string | null;
-  totalBalance: number;
-  createdAt: string;
 }
 
 export interface SupplierInput {
   /** @minLength 1 */
   name: string;
   /** @nullable */
+  companyName?: string | null;
+  /** @nullable */
   contactEmail?: string | null;
+}
+
+export interface Supplier {
+  id: number;
+  name: string;
+  /** @nullable */
+  companyName?: string | null;
+  /** @nullable */
+  contactEmail?: string | null;
+  totalBalance: number;
+  createdAt: string;
 }
 
 export type SupplierReturnStatus =

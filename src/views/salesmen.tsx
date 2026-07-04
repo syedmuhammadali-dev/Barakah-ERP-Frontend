@@ -8,7 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Plus, Percent, Search, Trophy, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -26,6 +27,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   initials: z.string().min(1, "Initials required").max(3, "Max 3 characters"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
+  profileImageUrl: z.string().optional().or(z.literal("")),
   target: z.coerce.number().min(0, "Target must be positive"),
   commissionRate: z.coerce.number().min(0, "Commission rate must be positive").max(100, "Cannot exceed 100%"),
 });
@@ -61,6 +63,7 @@ export function Salesmen() {
       name: "",
       initials: "",
       email: "",
+      profileImageUrl: "",
       target: 10000,
       commissionRate: 5,
     },
@@ -76,6 +79,7 @@ export function Salesmen() {
         name: selectedSalesman.name,
         initials: selectedSalesman.initials,
         email: selectedSalesman.email ?? "",
+        profileImageUrl: selectedSalesman.profileImageUrl ?? "",
         target: selectedSalesman.target,
         commissionRate: selectedSalesman.commissionRate,
       });
@@ -86,6 +90,7 @@ export function Salesmen() {
       name: "",
       initials: "",
       email: "",
+      profileImageUrl: "",
       target: 10000,
       commissionRate: 5,
     });
@@ -109,6 +114,7 @@ export function Salesmen() {
           name: values.name,
           initials: values.initials,
           email: values.email || null,
+          profileImageUrl: values.profileImageUrl || null,
           target: values.target,
           commissionRate: values.commissionRate,
         }),
@@ -123,6 +129,7 @@ export function Salesmen() {
           name: values.name,
           initials: values.initials,
           email: values.email || undefined,
+          profileImageUrl: values.profileImageUrl || undefined,
           target: values.target,
           commissionRate: values.commissionRate,
         },
@@ -216,6 +223,19 @@ export function Salesmen() {
                     <FormLabel>{t("salesmen.emailOptional")}</FormLabel>
                     <FormControl>
                       <Input placeholder="ahmed@example.com" type="email" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="profileImageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Photo URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com/photo.jpg" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -349,6 +369,7 @@ export function Salesmen() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar>
+                            <AvatarImage src={salesman.profileImageUrl || undefined} />
                             <AvatarFallback className="bg-secondary text-secondary-foreground font-bold">{salesman.initials}</AvatarFallback>
                           </Avatar>
                           <div>

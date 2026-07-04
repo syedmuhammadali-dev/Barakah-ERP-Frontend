@@ -74,6 +74,7 @@ export function Inventory() {
     maxStock: z.coerce.number().min(0),
     isAmanat: z.boolean().default(false),
     isReturnable: z.boolean().default(false),
+    salesmanName: z.string().optional().default(""),
   }), []);
 
   type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -91,6 +92,7 @@ export function Inventory() {
       maxStock: 0,
       isAmanat: false,
       isReturnable: false,
+      salesmanName: "",
     },
   });
 
@@ -107,6 +109,7 @@ export function Inventory() {
       maxStock: 0,
       isAmanat: false,
       isReturnable: false,
+      salesmanName: "",
     },
   });
 
@@ -197,6 +200,7 @@ export function Inventory() {
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
           isReturnable: values.isReturnable,
+          salesmanName: values.salesmanName || undefined,
         },
       });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
@@ -257,6 +261,13 @@ export function Inventory() {
                     <FormItem>
                       <FormLabel>{t("inventory.brand")}</FormLabel>
                       <FormControl><Input placeholder="Barakah" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="salesmanName" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Salesman</FormLabel>
+                      <FormControl><Input placeholder="Assigned salesman" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />

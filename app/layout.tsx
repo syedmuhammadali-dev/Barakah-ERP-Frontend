@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   },
   description:
     "Pakistan-first ERP for inventory, sales, zakat, and retail operations.",
+  icons: {
+    icon: "/favicon.svg",
+  },
   alternates: {
     canonical: "/",
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import {
   getGetSalesSummaryQueryKey,
   getListSalesQueryKey,
@@ -8,6 +8,7 @@ import {
   useGetSalesSummary,
   useListSales,
   useListSalesmen,
+  useListProducts,
 } from "@barakah/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
@@ -57,6 +58,7 @@ import { useAppLocale } from "@/lib/i18n";
 
 const saleFormSchema = z.object({
   customerName: z.string().min(2, "Customer name is required"),
+  productName: z.string().optional(),
   salesmanId: z.string().optional(),
   paymentMethod: z.enum(["cash", "card", "credit"]),
   discount: z.coerce.number().min(0).default(0),
@@ -73,6 +75,7 @@ export function Sales() {
   const queryClient = useQueryClient();
   const createSale = useCreateSale();
   const { data: salesmen } = useListSalesmen();
+  const { data: allProducts } = useListProducts();
   const { t } = useAppLocale();
 
   const { data: summary, isLoading: summaryLoading, error: summaryError } =
@@ -104,10 +107,23 @@ export function Sales() {
     );
   }, [sales, searchTerm]);
 
+  const [productSearch, setProductSearch] = useState("");
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const productInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredProducts = useMemo(() => {
+    if (!productSearch.trim()) return allProducts ?? [];
+    const q = productSearch.toLowerCase();
+    return (allProducts ?? []).filter((p) =>
+      p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
+    ).slice(0, 10);
+  }, [allProducts, productSearch]);
+
   const form = useForm<SaleFormValues>({
     resolver: zodResolver(saleFormSchema),
     defaultValues: {
       customerName: "",
+      productName: "",
       salesmanId: "none",
       paymentMethod: "cash",
       discount: 0,
@@ -153,6 +169,7 @@ export function Sales() {
       await createSale.mutateAsync({
         data: {
           customerName: values.customerName,
+          productName: values.productName || undefined,
           salesmanId:
             values.salesmanId && values.salesmanId !== "none"
               ? Number(values.salesmanId)
@@ -229,6 +246,52 @@ export function Sales() {
                         <FormControl>
                           <Input placeholder="Ahmed Traders" {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="productName"
+                    render={({ field }) => (
+                      <FormItem className="relative">
+                        <FormLabel>Product / Item</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Search product or type custom name"
+                            {...field}
+                            ref={productInputRef}
+                            value={productSearch}
+                            onChange={(e) => {
+                              setProductSearch(e.target.value);
+                              field.onChange(e.target.value);
+                              setShowProductDropdown(true);
+                            }}
+                            onFocus={() => setShowProductDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowProductDropdown(false), 200)}
+                          />
+                        </FormControl>
+                        {showProductDropdown && filteredProducts.length > 0 && (
+                          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                            {filteredProducts.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setProductSearch(p.name);
+                                  field.onChange(p.name);
+                                  setShowProductDropdown(false);
+                                }}
+                              >
+                                <span className="font-medium">{p.name}</span>
+                                <span className="text-muted-foreground ml-2 text-xs">{p.sku}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
