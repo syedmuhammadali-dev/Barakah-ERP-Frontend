@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +25,18 @@ import {
   Calculator,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@barakah/auth-web";
+
+const TIMEZONES = [
+  { label: "Pakistan Standard Time (GMT+05:00)", value: "Asia/Karachi" },
+  { label: "India Standard Time (GMT+05:30)", value: "Asia/Kolkata" },
+  { label: "Arabian Standard Time (GMT+03:00)", value: "Asia/Riyadh" },
+  { label: "Gulf Standard Time (GMT+04:00)", value: "Asia/Dubai" },
+  { label: "Coordinated Universal Time (GMT+00:00)", value: "UTC" },
+  { label: "Bangladesh Standard Time (GMT+06:00)", value: "Asia/Dhaka" },
+  { label: "Afghanistan Time (GMT+04:30)", value: "Asia/Kabul" },
+];
 
 const BUSINESS_TYPES = [
   { id: "spare_parts", label: "Bike Spare Parts", icon: Wrench },
@@ -58,7 +70,7 @@ export function Onboarding() {
     baseCurrency: "PKR",
     vatRate: 0,
     islamicModeEnabled: true,
-    timezone: "(GMT+05:00) Karachi",
+    timezone: "Asia/Karachi",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -72,9 +84,15 @@ export function Onboarding() {
     });
   };
 
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
   const completeOnboarding = useCompleteOnboarding({
     mutation: {
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["businessProfile", user?.id],
+        });
         router.replace("/dashboard");
       },
       onError: () => {
@@ -90,7 +108,10 @@ export function Onboarding() {
     }
     if (!form.businessType) {
       newErrors.businessType = "Please select a business type";
-    } else if (form.businessType === "custom" && !form.customBusinessType.trim()) {
+    } else if (
+      form.businessType === "custom" &&
+      !form.customBusinessType.trim()
+    ) {
       newErrors.customBusinessType = "Please enter your business type";
     }
     setErrors(newErrors);
@@ -205,7 +226,9 @@ export function Onboarding() {
                     className={`h-11 ${errors.businessName ? "border-destructive" : ""}`}
                   />
                   {errors.businessName && (
-                    <p className="text-sm text-destructive">{errors.businessName}</p>
+                    <p className="text-sm text-destructive">
+                      {errors.businessName}
+                    </p>
                   )}
                 </div>
 
@@ -235,7 +258,9 @@ export function Onboarding() {
                     ))}
                   </div>
                   {errors.businessType && (
-                    <p className="text-sm text-destructive">{errors.businessType}</p>
+                    <p className="text-sm text-destructive">
+                      {errors.businessType}
+                    </p>
                   )}
                   {form.businessType === "custom" && (
                     <div className="mt-2 space-y-1">
@@ -252,7 +277,9 @@ export function Onboarding() {
                         className={`h-11 ${errors.customBusinessType ? "border-destructive" : ""}`}
                       />
                       {errors.customBusinessType && (
-                        <p className="text-sm text-destructive">{errors.customBusinessType}</p>
+                        <p className="text-sm text-destructive">
+                          {errors.customBusinessType}
+                        </p>
                       )}
                     </div>
                   )}
@@ -379,11 +406,11 @@ export function Onboarding() {
                     }
                     className="w-full h-11 rounded-lg border border-input bg-background px-3 text-sm"
                   >
-                    <option>(GMT+05:00) Karachi</option>
-                    <option>(GMT+05:30) Kolkata</option>
-                    <option>(GMT+03:00) Riyadh</option>
-                    <option>(GMT+04:00) Dubai</option>
-                    <option>(GMT+00:00) UTC</option>
+                    {TIMEZONES.map((tz) => (
+                      <option key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </motion.div>

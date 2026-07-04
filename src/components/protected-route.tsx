@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,11 +8,7 @@ import { AppLayout } from "@/components/layout";
 import { SubscriptionGuard } from "@/components/subscription-guard";
 import { AppShellSkeleton } from "@/components/app-shell-skeleton";
 
-export function ProtectedRoute({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading: isAuthLoading, isAuthenticated } = useAuth();
@@ -40,7 +36,10 @@ export function ProtectedRoute({
 
       if (isProfileMissing && pathname !== "/onboarding") {
         router.replace("/onboarding");
-      } else if (businessProfile?.onboardingCompleted && pathname === "/onboarding") {
+      } else if (
+        businessProfile?.onboardingCompleted &&
+        pathname === "/onboarding"
+      ) {
         router.replace("/dashboard");
       }
     }
@@ -66,14 +65,15 @@ export function ProtectedRoute({
     businessProfileError != null || businessProfile == null;
 
   if (isProfileMissing) {
+    if (pathname === "/onboarding") {
+      return <>{children}</>;
+    }
     return <AppShellSkeleton />;
   }
 
   return (
     <AppLayout>
-      <SubscriptionGuard>
-        {children}
-      </SubscriptionGuard>
+      <SubscriptionGuard>{children}</SubscriptionGuard>
     </AppLayout>
   );
 }
