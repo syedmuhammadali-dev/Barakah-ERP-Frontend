@@ -185,6 +185,7 @@ export interface Product {
   isReturnable: boolean;
   /** @nullable */
   deadline?: string | null;
+  attributes?: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -208,6 +209,7 @@ export interface ProductInput {
   deadline?: string | null;
   /** @nullable */
   salesmanName?: string | null;
+  attributes?: Record<string, unknown>;
 }
 
 export interface ProductUpdate {
@@ -227,6 +229,10 @@ export interface ProductUpdate {
   isAmanat?: boolean | null;
   /** @nullable */
   isReturnable?: boolean | null;
+  /** @nullable */
+  category?: string | null;
+  /** @nullable */
+  attributes?: Record<string, unknown> | null;
   /** @nullable */
   deadline?: string | null;
 }

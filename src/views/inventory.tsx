@@ -9,7 +9,11 @@ import {
   useUpdateProduct,
   useDeleteProduct,
   useListProducts,
+  useGetBusinessProfile,
 } from "@barakah/api-client-react";
+import { getBusinessTypeConfig } from "@/lib/business-types";
+import { computeAdjustedStock } from "@/lib/inventory-utils";
+import { BusinessTypeExtraFields } from "@/components/business-type-extra-fields";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -51,15 +55,24 @@ export function Inventory() {
     isAmanat: boolean;
     isReturnable: boolean;
     deadline?: string | null;
+    attributes?: Record<string, unknown>;
     createdAt: string;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [isAdjustOpen, setIsAdjustOpen] = useState(false);
+  const [adjustDelta, setAdjustDelta] = useState(0);
+  const [adjustReason, setAdjustReason] = useState("");
+  const [addExtraFields, setAddExtraFields] = useState<Record<string, string>>({});
+  const [editExtraFields, setEditExtraFields] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
-  
+
+  const { data: businessProfile } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
+  const businessTypeConfig = useMemo(() => getBusinessTypeConfig(businessProfile?.businessType), [businessProfile?.businessType]);
+
   const { data: summary, isLoading: summaryLoading, error: summaryError } = useGetInventorySummary();
   const { data: products, isLoading: productsLoading, error: productsError } = useListProducts({ search: searchTerm.length > 2 ? searchTerm : undefined });
 
@@ -130,11 +143,22 @@ export function Inventory() {
       isAmanat: selectedProduct.isAmanat,
       isReturnable: selectedProduct.isReturnable,
     });
-  }, [editForm, isEditOpen, selectedProduct]);
+    const attrs = selectedProduct.attributes ?? {};
+    setEditExtraFields(
+      Object.fromEntries(businessTypeConfig.extraFields.map((f) => [f.key, String(attrs[f.key] ?? "")])),
+    );
+  }, [editForm, isEditOpen, selectedProduct, businessTypeConfig]);
 
   const openEditProduct = (product: typeof selectedProduct) => {
     setSelectedProduct(product);
     setIsEditOpen(true);
+  };
+
+  const openAdjustStock = (product: typeof selectedProduct) => {
+    setSelectedProduct(product);
+    setAdjustDelta(0);
+    setAdjustReason("");
+    setIsAdjustOpen(true);
   };
 
   const openHistory = (product: typeof selectedProduct) => {
@@ -152,12 +176,14 @@ export function Inventory() {
         id: selectedProduct.id,
         data: {
           name: values.name,
+          category: values.category,
           salePrice: values.salePrice,
           margin: values.margin,
           stockLevel: values.stockLevel,
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
           isReturnable: values.isReturnable,
+          attributes: editExtraFields,
         },
       });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
@@ -165,10 +191,32 @@ export function Inventory() {
       toast({ title: "Product updated", description: `${values.name} has been updated.` });
       setIsEditOpen(false);
       setSelectedProduct(null);
-    } catch {
+    } catch (error) {
+      console.error("Failed to update product:", error);
       toast({ title: "Unable to update product", description: "Please review the fields and try again.", variant: "destructive" });
     }
   });
+
+  const handleAdjustStock = async () => {
+    if (!selectedProduct) {
+      return;
+    }
+    const newStockLevel = computeAdjustedStock(selectedProduct.stockLevel, adjustDelta);
+    try {
+      await updateProduct.mutateAsync({
+        id: selectedProduct.id,
+        data: { stockLevel: newStockLevel, maxStock: selectedProduct.maxStock },
+      });
+      await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
+      toast({ title: "Stock adjusted", description: `${selectedProduct.name} is now at ${newStockLevel} units.` });
+      setIsAdjustOpen(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      console.error("Failed to adjust stock:", error);
+      toast({ title: "Unable to adjust stock", description: "Please try again.", variant: "destructive" });
+    }
+  };
 
   const handleDeleteProduct = async () => {
     if (!deleteTarget) {
@@ -181,7 +229,8 @@ export function Inventory() {
       await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
       toast({ title: "Product deleted", description: `${deleteTarget.name} has been removed.` });
       setDeleteTarget(null);
-    } catch {
+    } catch (error) {
+      console.error("Failed to delete product:", error);
       toast({ title: "Unable to delete product", description: "The item could not be removed.", variant: "destructive" });
     }
   };
@@ -201,14 +250,17 @@ export function Inventory() {
           isAmanat: values.isAmanat,
           isReturnable: values.isReturnable,
           salesmanName: values.salesmanName || undefined,
+          attributes: addExtraFields,
         },
       });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
       toast({ title: "Product added", description: `${values.name} is now in the catalog.` });
       form.reset();
+      setAddExtraFields({});
       setIsAddOpen(false);
-    } catch {
+    } catch (error) {
+      console.error("Failed to create product:", error);
       toast({ title: "Unable to save product", description: "Please review the fields and try again.", variant: "destructive" });
     }
   });
@@ -253,7 +305,16 @@ export function Inventory() {
                   <FormField control={form.control} name="category" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <FormControl><Input placeholder="Clothing" {...field} /></FormControl>
+                      <FormControl>
+                        <>
+                          <Input placeholder="Clothing" list="add-category-options" {...field} />
+                          <datalist id="add-category-options">
+                            {businessTypeConfig.defaultCategories.map((c) => (
+                              <option key={c} value={c} />
+                            ))}
+                          </datalist>
+                        </>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -272,6 +333,11 @@ export function Inventory() {
                     </FormItem>
                   )} />
                 </div>
+                <BusinessTypeExtraFields
+                  fields={businessTypeConfig.extraFields}
+                  values={addExtraFields}
+                  onChange={(key, value) => setAddExtraFields((prev) => ({ ...prev, [key]: value }))}
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="salePrice" render={({ field }) => (
                     <FormItem>
@@ -381,14 +447,28 @@ export function Inventory() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={editForm.control} name="brand" render={({ field }) => (
+                <FormField control={editForm.control} name="category" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("inventory.brand")}</FormLabel>
-                    <FormControl><Input disabled {...field} value={field.value || ""} /></FormControl>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <>
+                        <Input list="edit-category-options" {...field} />
+                        <datalist id="edit-category-options">
+                          {businessTypeConfig.defaultCategories.map((c) => (
+                            <option key={c} value={c} />
+                          ))}
+                        </datalist>
+                      </>
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
               </div>
+              <BusinessTypeExtraFields
+                fields={businessTypeConfig.extraFields}
+                values={editExtraFields}
+                onChange={(key, value) => setEditExtraFields((prev) => ({ ...prev, [key]: value }))}
+              />
               <div className="flex items-center gap-6">
                 <FormField control={editForm.control} name="isAmanat" render={({ field }) => (
                   <FormItem className="flex items-center gap-2 space-y-0">
@@ -412,6 +492,43 @@ export function Inventory() {
               </Button>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAdjustOpen} onOpenChange={setIsAdjustOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>{t("inventory.adjustStock")}</DialogTitle>
+            <DialogDescription>
+              Add or remove units from {selectedProduct?.name ?? "this product"}&apos;s current stock of {selectedProduct?.stockLevel ?? 0}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="adjust-delta">Adjustment (use a negative number to remove stock)</Label>
+              <Input
+                id="adjust-delta"
+                type="number"
+                value={adjustDelta}
+                onChange={(e) => setAdjustDelta(Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="adjust-reason">Reason</Label>
+              <Input
+                id="adjust-reason"
+                placeholder="e.g. new stock received, damaged goods"
+                value={adjustReason}
+                onChange={(e) => setAdjustReason(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              New stock level: {computeAdjustedStock(selectedProduct?.stockLevel ?? 0, adjustDelta)}
+            </p>
+            <Button type="button" className="w-full" disabled={updateProduct.isPending || adjustDelta === 0} onClick={handleAdjustStock}>
+              {updateProduct.isPending ? t("inventory.saving") : t("inventory.adjustStock")}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -621,8 +738,8 @@ export function Inventory() {
                             <DropdownMenuItem onClick={() => openEditProduct(product)}>
                               <Pencil className="mr-2 h-4 w-4" /> {t("inventory.editProduct")}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => openEditProduct(product)}>
-                              <Pencil className="mr-2 h-4 w-4" /> {t("inventory.adjustStock")}
+                            <DropdownMenuItem onClick={() => openAdjustStock(product)}>
+                              <Package className="mr-2 h-4 w-4" /> {t("inventory.adjustStock")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => openHistory(product)}>
                               <History className="mr-2 h-4 w-4" /> {t("inventory.viewHistory")}

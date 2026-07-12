@@ -1,7 +1,8 @@
  "use client";
 
 import { useState } from "react";
-import { useGetSubscriptionStatus } from "@barakah/api-client-react";
+import { useGetSubscriptionStatus, useRequestPayment } from "@barakah/api-client-react";
+import type { PaymentRequestInputMethod } from "@barakah/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,22 +25,19 @@ export function Subscription() {
   const [paymentResult, setPaymentResult] = useState<{ message: string; paymentInstructions: string } | null>(null);
 
   const { data: status, isLoading } = useGetSubscriptionStatus();
+  const requestPayment = useRequestPayment();
 
   const handleSubmit = async () => {
     if (!selectedMethod) { toast.error("Please select a payment method"); return; }
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/subscription/request-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ method: selectedMethod, transactionRef: txRef || undefined }),
+      const data = await requestPayment.mutateAsync({
+        data: { method: selectedMethod as PaymentRequestInputMethod, transactionRef: txRef || undefined },
       });
-      if (!res.ok) throw new Error("Failed");
-      const data = await res.json();
       setPaymentResult(data);
       toast.success("Payment request submitted!");
-    } catch {
+    } catch (error) {
+      console.error("Failed to submit payment request:", error);
       toast.error("Failed to submit payment request. Please try again.");
     } finally {
       setIsSubmitting(false);

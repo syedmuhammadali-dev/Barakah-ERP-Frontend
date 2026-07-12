@@ -27,6 +27,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@barakah/auth-web";
+import { getBusinessTypeConfig } from "@/lib/business-types";
 
 const TIMEZONES = [
   { label: "Pakistan Standard Time (GMT+05:00)", value: "Asia/Karachi" },
@@ -492,6 +493,23 @@ export function Onboarding() {
                     </div>
                   ))}
                 </div>
+
+                {(() => {
+                  const businessType = form.businessType === "custom" ? "custom" : form.businessType;
+                  const config = getBusinessTypeConfig(businessType);
+                  if (config.id === "custom" || config.defaultCategories.length === 0) return null;
+                  return (
+                    <div className="bg-muted/40 border border-border rounded-xl p-4 text-left">
+                      <p className="text-sm font-semibold">
+                        We&apos;ve pre-loaded categories for {config.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {config.defaultCategories.join(", ")}. You can pick these while adding
+                        products in Inventory, or type your own.
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
                   <p className="text-sm text-muted-foreground">

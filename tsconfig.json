@@ -8,7 +8,7 @@
     "src/**/*",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "**/*.test.tsx"],
   "compilerOptions": {
     "noEmit": true,
     "jsx": "preserve",
