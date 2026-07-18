@@ -158,8 +158,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <main className="flex-1 overflow-auto bg-background text-foreground">
-          <SidebarTrigger className="fixed top-3 left-3 z-50 md:hidden" />
-          <div className="p-8">{children}</div>
+          <div className="sticky top-0 z-40 flex items-center bg-background/80 px-4 py-2 backdrop-blur md:px-8">
+            <SidebarTrigger />
+          </div>
+          <div className="p-8 pt-4">{children}</div>
         </main>
       </div>
     </SidebarProvider>
