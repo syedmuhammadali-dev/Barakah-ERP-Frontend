@@ -24,6 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Autocomplete } from "@/components/ui/autocomplete";
 import { Package, AlertTriangle, Plus, Search, MoreHorizontal, ShieldCheck, Undo2, Pencil, Trash2, History } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
@@ -289,7 +290,14 @@ export function Inventory() {
                   <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("inventory.productName")}</FormLabel>
-                      <FormControl><Input placeholder="Lawn Suit" {...field} /></FormControl>
+                      <FormControl>
+                        <Autocomplete
+                          value={field.value}
+                          onChange={field.onChange}
+                          suggestions={businessTypeConfig.commonItems}
+                          placeholder="Search or type a product name"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -306,14 +314,12 @@ export function Inventory() {
                     <FormItem>
                       <FormLabel>Category</FormLabel>
                       <FormControl>
-                        <>
-                          <Input placeholder="Clothing" list="add-category-options" {...field} />
-                          <datalist id="add-category-options">
-                            {businessTypeConfig.defaultCategories.map((c) => (
-                              <option key={c} value={c} />
-                            ))}
-                          </datalist>
-                        </>
+                        <Autocomplete
+                          value={field.value}
+                          onChange={field.onChange}
+                          suggestions={businessTypeConfig.defaultCategories}
+                          placeholder="Search or type a category"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -411,7 +417,14 @@ export function Inventory() {
                 <FormField control={editForm.control} name="name" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.productName")}</FormLabel>
-                    <FormControl><Input placeholder="Lawn Suit" {...field} /></FormControl>
+                    <FormControl>
+                      <Autocomplete
+                        value={field.value}
+                        onChange={field.onChange}
+                        suggestions={businessTypeConfig.commonItems}
+                        placeholder="Search or type a product name"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -451,14 +464,12 @@ export function Inventory() {
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <>
-                        <Input list="edit-category-options" {...field} />
-                        <datalist id="edit-category-options">
-                          {businessTypeConfig.defaultCategories.map((c) => (
-                            <option key={c} value={c} />
-                          ))}
-                        </datalist>
-                      </>
+                      <Autocomplete
+                        value={field.value}
+                        onChange={field.onChange}
+                        suggestions={businessTypeConfig.defaultCategories}
+                        placeholder="Search or type a category"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -660,11 +671,11 @@ export function Inventory() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-            {productsLoading ? (
-              <div className="p-6 space-y-4">
-                {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-              </div>
-            ) : (
+          {productsLoading ? (
+            <div className="p-6 space-y-4">
+              {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+          ) : (
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow>
@@ -679,7 +690,7 @@ export function Inventory() {
               <TableBody>
                 {(products ?? []).map((product) => {
                   const stockPercent = Math.min(100, Math.round((product.stockLevel / product.maxStock) * 100));
-                  
+
                   return (
                     <TableRow key={product.id} className="group hover:bg-muted/20">
                       <TableCell className="font-mono text-xs text-muted-foreground">{product.sku}</TableCell>
@@ -708,19 +719,19 @@ export function Inventory() {
                           <span className="text-xs font-medium">{product.stockLevel} / {product.maxStock}</span>
                           <span className="text-xs text-muted-foreground">{stockPercent}%</span>
                         </div>
-                        <Progress 
-                          value={stockPercent} 
-                          className={`h-1.5 ${stockPercent < 20 ? 'bg-destructive/20 [&>div]:bg-destructive' : stockPercent < 50 ? 'bg-amber-500/20 [&>div]:bg-amber-500' : 'bg-primary/20 [&>div]:bg-primary'}`} 
+                        <Progress
+                          value={stockPercent}
+                          className={`h-1.5 ${stockPercent < 20 ? 'bg-destructive/20 [&>div]:bg-destructive' : stockPercent < 50 ? 'bg-amber-500/20 [&>div]:bg-amber-500' : 'bg-primary/20 [&>div]:bg-primary'}`}
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant="outline" 
+                        <Badge
+                          variant="outline"
                           className={
-                            product.status === 'in_stock' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 
-                            product.status === 'low_stock' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
-                            product.status === 'out_of_stock' ? 'bg-destructive/10 text-destructive border-destructive/20' : 
-                            'bg-secondary/20 text-secondary-foreground border-secondary/30'
+                            product.status === 'in_stock' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                              product.status === 'low_stock' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                product.status === 'out_of_stock' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                                  'bg-secondary/20 text-secondary-foreground border-secondary/30'
                           }
                         >
                           {product.status.replace('_', ' ').toUpperCase()}

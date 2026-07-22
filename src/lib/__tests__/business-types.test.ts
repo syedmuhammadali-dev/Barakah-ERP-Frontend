@@ -20,6 +20,16 @@ describe("business-types config", () => {
     expect(spareParts.extraFields.some((f) => f.key === "partNumber")).toBe(true);
   });
 
+  it("provides searchable common items for stock business types", () => {
+    const spareParts = getBusinessTypeConfig("spare_parts");
+    expect(spareParts.commonItems.length).toBeGreaterThan(0);
+    expect(spareParts.commonItems).toContain("Spark Plug");
+    // Every non-custom type should offer some item suggestions.
+    BUSINESS_TYPES.filter((t) => t.id !== "custom").forEach((t) => {
+      expect(t.commonItems.length).toBeGreaterThan(0);
+    });
+  });
+
   it("falls back to the custom config for an unknown/free-text business type", () => {
     const config = getBusinessTypeConfig("my furniture shop");
     expect(config.id).toBe("custom");
