@@ -5,6 +5,7 @@ Next.js frontend for Barakah ERP.
 ## Run Locally
 
 Copy `.env.example` to `.env.local` and set:
+
 - `NEXT_PUBLIC_API_TARGET`
 - `NEXT_PUBLIC_SITE_URL`
 
@@ -14,6 +15,7 @@ npm run dev
 ```
 
 The app runs on:
+
 - `http://localhost:3000`
 
 ## Build
