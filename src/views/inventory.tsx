@@ -25,7 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Autocomplete } from "@/components/ui/autocomplete";
-import { Package, AlertTriangle, Plus, Search, MoreHorizontal, ShieldCheck, Undo2, Pencil, Trash2, History } from "lucide-react";
+import { Package, AlertTriangle, Plus, Search, MoreHorizontal, ShieldCheck, Undo2, Pencil, Trash2, History, Upload } from "lucide-react";
+import { AppLink } from "@/components/route-transition";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { formatMoney } from "@/lib/format";
@@ -35,6 +36,21 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useAppLocale } from "@/lib/i18n";
+
+function productStatusLabel(t: (key: string) => string, status: string): string {
+  switch (status) {
+    case "in_stock":
+      return t("inventory.statusInStock");
+    case "low_stock":
+      return t("inventory.statusLowStock");
+    case "out_of_stock":
+      return t("inventory.statusOutOfStock");
+    case "return_due":
+      return t("inventory.statusReturnDue");
+    default:
+      return status.replace("_", " ").toUpperCase();
+  }
+}
 
 export function Inventory() {
   const { t } = useAppLocale();
@@ -273,7 +289,13 @@ export function Inventory() {
           <h1 className="text-3xl font-bold tracking-tight">{t("inventory.title")}</h1>
           <p className="text-muted-foreground mt-1">{t("inventory.description")}</p>
         </div>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" asChild>
+            <AppLink href="/bills">
+              <Upload className="w-4 h-4 mr-2" /> {t("inventory.bulkUploadBill")}
+            </AppLink>
+          </Button>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" /> {t("inventory.addProduct")}
@@ -295,7 +317,7 @@ export function Inventory() {
                           value={field.value}
                           onChange={field.onChange}
                           suggestions={businessTypeConfig.commonItems}
-                          placeholder="Search or type a product name"
+                          placeholder={t("inventory.searchProductNamePlaceholder")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -304,7 +326,7 @@ export function Inventory() {
                   <FormField control={form.control} name="sku" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("inventory.sku")}</FormLabel>
-                      <FormControl><Input placeholder="SKU-001" {...field} /></FormControl>
+                      <FormControl><Input placeholder={t("inventory.skuPlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -312,13 +334,13 @@ export function Inventory() {
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="category" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>{t("inventory.category")}</FormLabel>
                       <FormControl>
                         <Autocomplete
                           value={field.value}
                           onChange={field.onChange}
                           suggestions={businessTypeConfig.defaultCategories}
-                          placeholder="Search or type a category"
+                          placeholder={t("inventory.searchCategoryPlaceholder")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -327,14 +349,14 @@ export function Inventory() {
                   <FormField control={form.control} name="brand" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("inventory.brand")}</FormLabel>
-                      <FormControl><Input placeholder="Barakah" {...field} /></FormControl>
+                      <FormControl><Input placeholder={t("inventory.brandPlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="salesmanName" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Salesman</FormLabel>
-                      <FormControl><Input placeholder="Assigned salesman" {...field} /></FormControl>
+                      <FormLabel>{t("inventory.salesmanLabel")}</FormLabel>
+                      <FormControl><Input placeholder={t("inventory.assignedSalesmanPlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -348,14 +370,14 @@ export function Inventory() {
                   <FormField control={form.control} name="salePrice" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("inventory.salePrice")}</FormLabel>
-                      <FormControl><Input type="number" min="0" step="0.01" {...field} /></FormControl>
+                      <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="margin" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("inventory.marginPercent")}</FormLabel>
-                      <FormControl><Input type="number" min="0" max="100" step="0.1" {...field} /></FormControl>
+                      <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -364,14 +386,14 @@ export function Inventory() {
                   <FormField control={form.control} name="stockLevel" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("inventory.stockLevel")}</FormLabel>
-                      <FormControl><Input type="number" min="0" {...field} /></FormControl>
+                      <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="maxStock" render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("inventory.maxStock")}</FormLabel>
-                      <FormControl><Input type="number" min="0" {...field} /></FormControl>
+                      <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -401,6 +423,7 @@ export function Inventory() {
             </Form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -422,7 +445,7 @@ export function Inventory() {
                         value={field.value}
                         onChange={field.onChange}
                         suggestions={businessTypeConfig.commonItems}
-                        placeholder="Search or type a product name"
+                        placeholder={t("inventory.searchProductNamePlaceholder")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -431,7 +454,7 @@ export function Inventory() {
                 <FormField control={editForm.control} name="salePrice" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.salePrice")}</FormLabel>
-                    <FormControl><Input type="number" min="0" step="0.01" {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -440,14 +463,14 @@ export function Inventory() {
                 <FormField control={editForm.control} name="margin" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.marginPercent")}</FormLabel>
-                    <FormControl><Input type="number" min="0" max="100" step="0.1" {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={editForm.control} name="stockLevel" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.stockLevel")}</FormLabel>
-                    <FormControl><Input type="number" min="0" {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -456,19 +479,19 @@ export function Inventory() {
                 <FormField control={editForm.control} name="maxStock" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.maxStock")}</FormLabel>
-                    <FormControl><Input type="number" min="0" {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={editForm.control} name="category" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t("inventory.category")}</FormLabel>
                     <FormControl>
                       <Autocomplete
                         value={field.value}
                         onChange={field.onChange}
                         suggestions={businessTypeConfig.defaultCategories}
-                        placeholder="Search or type a category"
+                        placeholder={t("inventory.searchCategoryPlaceholder")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -511,12 +534,14 @@ export function Inventory() {
           <DialogHeader>
             <DialogTitle>{t("inventory.adjustStock")}</DialogTitle>
             <DialogDescription>
-              Add or remove units from {selectedProduct?.name ?? "this product"}&apos;s current stock of {selectedProduct?.stockLevel ?? 0}.
+              {t("inventory.adjustStockDescription")
+                .replace("{name}", selectedProduct?.name ?? "this product")
+                .replace("{stock}", String(selectedProduct?.stockLevel ?? 0))}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="adjust-delta">Adjustment (use a negative number to remove stock)</Label>
+              <Label htmlFor="adjust-delta">{t("inventory.adjustmentLabel")}</Label>
               <Input
                 id="adjust-delta"
                 type="number"
@@ -525,16 +550,16 @@ export function Inventory() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="adjust-reason">Reason</Label>
+              <Label htmlFor="adjust-reason">{t("inventory.reasonLabel")}</Label>
               <Input
                 id="adjust-reason"
-                placeholder="e.g. new stock received, damaged goods"
+                placeholder={t("inventory.reasonPlaceholder")}
                 value={adjustReason}
                 onChange={(e) => setAdjustReason(e.target.value)}
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              New stock level: {computeAdjustedStock(selectedProduct?.stockLevel ?? 0, adjustDelta)}
+              {t("inventory.newStockLevel").replace("{level}", String(computeAdjustedStock(selectedProduct?.stockLevel ?? 0, adjustDelta)))}
             </p>
             <Button type="button" className="w-full" disabled={updateProduct.isPending || adjustDelta === 0} onClick={handleAdjustStock}>
               {updateProduct.isPending ? t("inventory.saving") : t("inventory.adjustStock")}
@@ -548,20 +573,20 @@ export function Inventory() {
           <DialogHeader>
             <DialogTitle>{t("inventory.productSnapshot")}</DialogTitle>
             <DialogDescription>
-              Current inventory details for {selectedProduct?.name ?? "this product"}.
+              {t("inventory.productSnapshotDescription").replace("{name}", selectedProduct?.name ?? "this product")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t("inventory.sku")}</span>
-              <span className="font-medium">{selectedProduct?.sku ?? "N/A"}</span>
+              <span className="font-medium">{selectedProduct?.sku ?? t("inventory.na")}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Category</span>
-              <span className="font-medium">{selectedProduct?.category ?? "N/A"}</span>
+              <span className="text-muted-foreground">{t("inventory.category")}</span>
+              <span className="font-medium">{selectedProduct?.category ?? t("inventory.na")}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Stock</span>
+              <span className="text-muted-foreground">{t("inventory.productSnapshotStock")}</span>
               <span className="font-medium">{selectedProduct?.stockLevel ?? 0} / {selectedProduct?.maxStock ?? 0}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -569,11 +594,11 @@ export function Inventory() {
               <span className="font-medium">{formatMoney(selectedProduct?.salePrice)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Status</span>
-              <span className="font-medium uppercase">{selectedProduct?.status ?? "N/A"}</span>
+              <span className="text-muted-foreground">{t("inventory.status")}</span>
+              <span className="font-medium">{selectedProduct ? productStatusLabel(t, selectedProduct.status) : t("inventory.na")}</span>
             </div>
             <p className="text-xs text-muted-foreground pt-2">
-              Detailed stock movement history is not yet exposed by the backend, so this panel shows the current live snapshot.
+              {t("inventory.historyNote")}
             </p>
           </div>
         </DialogContent>
@@ -584,7 +609,7 @@ export function Inventory() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("inventory.deleteProductTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove {deleteTarget?.name ?? "this product"} from inventory. This action cannot be undone.
+              {t("inventory.deleteProductDescription").replace("{name}", deleteTarget?.name ?? "this product")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -603,7 +628,7 @@ export function Inventory() {
                 {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : (
                   <h3 className="text-2xl font-bold mt-1 text-primary">{formatMoney(summary?.totalValue)}</h3>
                 )}
-                {summaryError ? <p className="text-xs text-destructive mt-2">Inventory summary unavailable.</p> : null}
+                {summaryError ? <p className="text-xs text-destructive mt-2">{t("inventory.productsUnavailable")}</p> : null}
               </div>
               <div className="p-3 bg-primary/10 text-primary rounded-lg">
                 <Package className="w-5 h-5" />
@@ -625,7 +650,7 @@ export function Inventory() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{t("inventory.lowStock")}</p>
                 {summaryLoading ? <Skeleton className="h-8 w-24 mt-1" /> : (
-                  <h3 className="text-2xl font-bold mt-1">{summary?.lowStockCount} Items</h3>
+                  <h3 className="text-2xl font-bold mt-1">{summary?.lowStockCount} {t("dashboard.items")}</h3>
                 )}
               </div>
               <div className={`p-3 rounded-lg ${summary?.lowStockCount != null && summary.lowStockCount > 0 ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground"}`}>
@@ -644,14 +669,14 @@ export function Inventory() {
                 {summaryLoading ? <Skeleton className="h-8 w-32 mt-1" /> : (
                   <h3 className="text-2xl font-bold mt-1">{formatMoney(summary?.pendingReturnsValue)}</h3>
                 )}
-                {summaryError ? <p className="text-xs text-destructive mt-2">Return summary unavailable.</p> : null}
+                {summaryError ? <p className="text-xs text-destructive mt-2">{t("inventory.productsUnavailable")}</p> : null}
               </div>
               <div className="p-3 bg-secondary text-secondary-foreground rounded-lg">
                 <Undo2 className="w-5 h-5" />
               </div>
             </div>
             {summaryLoading ? <Skeleton className="h-4 w-24 mt-4" /> : (
-              <p className="text-xs text-muted-foreground mt-4">Across {summary?.pendingReturnsCount} products</p>
+              <p className="text-xs text-muted-foreground mt-4">{t("inventory.acrossProducts").replace("{count}", String(summary?.pendingReturnsCount ?? 0))}</p>
             )}
           </CardContent>
         </Card>
@@ -683,7 +708,7 @@ export function Inventory() {
                   <TableHead>{t("inventory.productDetails")}</TableHead>
                   <TableHead>{t("inventory.priceMargin")}</TableHead>
                   <TableHead className="w-[200px]">{t("inventory.stockLevel")}</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("inventory.status")}</TableHead>
                   <TableHead className="text-right">{t("inventory.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -712,7 +737,7 @@ export function Inventory() {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">{formatMoney(product.salePrice)}</div>
-                        <div className="text-xs text-muted-foreground">{product.margin}% Margin</div>
+                        <div className="text-xs text-muted-foreground">{product.margin}{t("inventory.marginSuffix")}</div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-between mb-1">
@@ -734,14 +759,14 @@ export function Inventory() {
                                   'bg-secondary/20 text-secondary-foreground border-secondary/30'
                           }
                         >
-                          {product.status.replace('_', ' ').toUpperCase()}
+                          {productStatusLabel(t, product.status)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <span className="sr-only">Open menu</span>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">{t("inventory.openMenu")}</span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

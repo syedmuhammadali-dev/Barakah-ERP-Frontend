@@ -34,7 +34,7 @@ export function Reports() {
   const downloadCsv = () => {
     if (section === "sales") {
       const rows = [
-        [t("reports.date"), "Invoice ID", "Customer", "Status", t("reports.grossSales"), t("reports.zakatEst")],
+        [t("reports.date"), t("reports.invoiceId"), t("reports.customer"), t("reports.status"), t("reports.grossSales"), t("reports.zakatEst")],
         ...(report?.invoices ?? []).map((invoice) => [
           invoice.date,
           invoice.invoiceId,
@@ -181,9 +181,9 @@ export function Reports() {
                       <TableHeader className="bg-muted/30">
                         <TableRow>
                           <TableHead>{t("reports.date")}</TableHead>
-                          <TableHead>Invoice ID</TableHead>
-                          <TableHead>Customer</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead>{t("reports.invoiceId")}</TableHead>
+                          <TableHead>{t("reports.customer")}</TableHead>
+                          <TableHead>{t("reports.status")}</TableHead>
                           <TableHead className="text-right">{t("reports.grossSales")}</TableHead>
                           <TableHead className="text-right">{t("reports.zakatEst")}</TableHead>
                         </TableRow>
@@ -196,7 +196,11 @@ export function Reports() {
                             <TableCell>{invoice.customer}</TableCell>
                             <TableCell>
                               <Badge variant="outline" className={invoice.status === 'settled' ? 'text-green-500 border-green-500/20 bg-green-500/10' : 'text-muted-foreground'}>
-                                {invoice.status}
+                                {invoice.status === 'settled' ? t("sales.settled")
+                                  : invoice.status === 'pending' ? t("sales.pending")
+                                  : invoice.status === 'credit' ? t("sales.credit")
+                                  : invoice.status === 'refunded' ? t("sales.refunded")
+                                  : invoice.status}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right font-medium">{formatMoney(invoice.grossSales)}</TableCell>
@@ -223,13 +227,13 @@ export function Reports() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground">Total Products</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t("reports.totalProducts")}</p>
                     <h3 className="text-3xl font-bold mt-1 text-primary">{products?.length ?? 0}</h3>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground">Low Stock Items</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t("reports.lowStockItems")}</p>
                     <h3 className="text-3xl font-bold mt-1">{(products ?? []).filter(p => p.status === "low_stock" || p.status === "out_of_stock").length}</h3>
                   </CardContent>
                 </Card>
@@ -237,7 +241,7 @@ export function Reports() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2"><Package className="w-5 h-5 text-primary" /> Category Distribution</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2"><Package className="w-5 h-5 text-primary" /> {t("reports.categoryDistribution")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] w-full">
@@ -265,16 +269,16 @@ export function Reports() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Top Products</CardTitle>
+                  <CardTitle className="text-lg">{t("reports.topProducts")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader className="bg-muted/30">
                       <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-right">Stock</TableHead>
-                        <TableHead className="text-right">Change</TableHead>
+                        <TableHead>{t("reports.product")}</TableHead>
+                        <TableHead>{t("reports.category")}</TableHead>
+                        <TableHead className="text-right">{t("reports.stock")}</TableHead>
+                        <TableHead className="text-right">{t("reports.change")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -298,13 +302,13 @@ export function Reports() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground">Total Returns</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t("reports.totalReturns")}</p>
                     <h3 className="text-3xl font-bold mt-1 text-primary">{returns?.length ?? 0}</h3>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground">Pending Returns Value</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t("reports.pendingReturnsValue")}</p>
                     <h3 className="text-3xl font-bold mt-1">{formatMoney((returns ?? []).filter(r => r.status === 'pending').reduce((s, r) => s + r.amount, 0))}</h3>
                   </CardContent>
                 </Card>
@@ -312,17 +316,17 @@ export function Reports() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg"><Undo2 className="w-5 h-5 text-primary inline mr-2" /> Return Audit Log</CardTitle>
+                  <CardTitle className="text-lg"><Undo2 className="w-5 h-5 text-primary inline mr-2" /> {t("reports.returnAuditLog")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader className="bg-muted/30">
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Supplier</TableHead>
-                        <TableHead>Product</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>{t("reports.date")}</TableHead>
+                        <TableHead>{t("reports.supplier")}</TableHead>
+                        <TableHead>{t("reports.product")}</TableHead>
+                        <TableHead className="text-right">{t("reports.amount")}</TableHead>
+                        <TableHead>{t("reports.status")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -334,7 +338,7 @@ export function Reports() {
                           <TableCell className="text-right font-medium">{formatMoney(r.amount)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={r.status === 'completed' ? 'text-green-500 border-green-500/20 bg-green-500/10' : r.status === 'pending' ? 'text-amber-500 border-amber-500/20 bg-amber-500/10' : 'text-destructive border-destructive/20 bg-destructive/10'}>
-                              {r.status.toUpperCase()}
+                              {r.status === 'pending' ? t("sales.pending") : r.status === 'completed' ? t("zakat.paid") : r.status}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -351,38 +355,37 @@ export function Reports() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground">Zakat Due</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t("reports.zakatDue")}</p>
                     <h3 className="text-3xl font-bold mt-1 text-primary">{formatMoney(overview?.zakatDue)}</h3>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground">Compliance Status</p>
-                    <h3 className="text-3xl font-bold mt-1 text-green-500">Active</h3>
+                    <p className="text-sm font-medium text-muted-foreground">{t("reports.complianceStatus")}</p>
+                    <h3 className="text-3xl font-bold mt-1 text-green-500">{t("reports.active")}</h3>
                   </CardContent>
                 </Card>
               </div>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg"><Calculator className="w-5 h-5 text-primary inline mr-2" /> Zakat & Compliance Overview</CardTitle>
+                  <CardTitle className="text-lg"><Calculator className="w-5 h-5 text-primary inline mr-2" /> {t("reports.zakatOverview")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground text-sm">
-                    Zakat is calculated at 2.5% of total revenue and inventory value. 
-                    All transactions are automatically checked for Sharia compliance.
+                    {t("reports.zakatOverviewDescription")}
                   </p>
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="rounded-lg border border-border/50 p-4">
-                      <p className="text-sm text-muted-foreground">Inventory Value</p>
+                      <p className="text-sm text-muted-foreground">{t("reports.inventoryValue")}</p>
                       <p className="text-xl font-bold mt-1">{formatMoney(overview?.inventoryValue)}</p>
                     </div>
                     <div className="rounded-lg border border-border/50 p-4">
-                      <p className="text-sm text-muted-foreground">Zakat Rate</p>
+                      <p className="text-sm text-muted-foreground">{t("reports.zakatRate")}</p>
                       <p className="text-xl font-bold mt-1">2.5%</p>
                     </div>
                     <div className="rounded-lg border border-border/50 p-4">
-                      <p className="text-sm text-muted-foreground">Low Stock Items</p>
+                      <p className="text-sm text-muted-foreground">{t("reports.lowStockItems")}</p>
                       <p className="text-xl font-bold mt-1">{overview?.lowStockCount ?? 0}</p>
                     </div>
                   </div>
@@ -396,31 +399,31 @@ export function Reports() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground"><Users className="w-4 h-4 inline mr-1" /> Team Size</p>
+                    <p className="text-sm font-medium text-muted-foreground"><Users className="w-4 h-4 inline mr-1" /> {t("reports.teamSize")}</p>
                     <h3 className="text-3xl font-bold mt-1 text-primary">{salesmen?.length ?? 0}</h3>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <p className="text-sm font-medium text-muted-foreground">Top Performer</p>
-                    <h3 className="text-3xl font-bold mt-1">{salesmen && salesmen.length > 0 ? [...salesmen].sort((a, b) => b.totalSales - a.totalSales)[0].name : "N/A"}</h3>
+                    <p className="text-sm font-medium text-muted-foreground">{t("reports.topPerformer")}</p>
+                    <h3 className="text-3xl font-bold mt-1">{salesmen && salesmen.length > 0 ? [...salesmen].sort((a, b) => b.totalSales - a.totalSales)[0].name : t("reports.na")}</h3>
                   </CardContent>
                 </Card>
               </div>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Salesman Performance</CardTitle>
+                  <CardTitle className="text-lg">{t("reports.salesmanPerformance")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader className="bg-muted/30">
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead className="text-right">Target</TableHead>
-                        <TableHead className="text-right">Sales</TableHead>
-                        <TableHead>Progress</TableHead>
-                        <TableHead className="text-right">Commission</TableHead>
+                        <TableHead>{t("reports.name")}</TableHead>
+                        <TableHead className="text-right">{t("reports.target")}</TableHead>
+                        <TableHead className="text-right">{t("reports.salesAmount")}</TableHead>
+                        <TableHead>{t("reports.progress")}</TableHead>
+                        <TableHead className="text-right">{t("reports.commission")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

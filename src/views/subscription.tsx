@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Calendar, Clock, CreditCard, CheckCircle2, AlertCircle } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { useAppLocale } from "@/lib/i18n";
 
 const PAYMENT_METHODS = [
   { id: "jazzcash", label: "JazzCash", color: "bg-red-500/10 border-red-500/30 text-red-400", activeColor: "border-red-500 bg-red-500/20" },
@@ -19,50 +20,53 @@ const PAYMENT_METHODS = [
 ];
 
 export function Subscription() {
+  const { t } = useAppLocale();
   const [selectedMethod, setSelectedMethod] = useState("");
   const [txRef, setTxRef] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentResult, setPaymentResult] = useState<{ message: string; paymentInstructions: string } | null>(null);
 
-  const { data: status, isLoading } = useGetSubscriptionStatus();
+  const { data: status, isLoading } = useGetSubscriptionStatus({
+    query: { queryKey: ["subscriptionStatus"], refetchInterval: 60_000 },
+  });
   const requestPayment = useRequestPayment();
 
   const handleSubmit = async () => {
-    if (!selectedMethod) { toast.error("Please select a payment method"); return; }
+    if (!selectedMethod) { toast.error(t("subscription.selectPaymentMethodError")); return; }
     setIsSubmitting(true);
     try {
       const data = await requestPayment.mutateAsync({
         data: { method: selectedMethod as PaymentRequestInputMethod, transactionRef: txRef || undefined },
       });
       setPaymentResult(data);
-      toast.success("Payment request submitted!");
+      toast.success(t("subscription.paymentSubmittedSuccess"));
     } catch (error) {
       console.error("Failed to submit payment request:", error);
-      toast.error("Failed to submit payment request. Please try again.");
+      toast.error(t("subscription.paymentSubmittedError"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const getStatusBadge = (s: string) => {
-    if (s === "trial") return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/30 border">Free Trial</Badge>;
-    if (s === "active") return <Badge className="bg-green-500/10 text-green-400 border-green-500/30 border">Active</Badge>;
-    return <Badge variant="destructive">Expired</Badge>;
+    if (s === "trial") return <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/30 border">{t("subscription.freeTrial")}</Badge>;
+    if (s === "active") return <Badge className="bg-green-500/10 text-green-400 border-green-500/30 border">{t("subscription.active")}</Badge>;
+    return <Badge variant="destructive">{t("subscription.expired")}</Badge>;
   };
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Subscription</h1>
-        <p className="text-muted-foreground mt-1">Manage your Barakah ERP subscription</p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("subscription.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("subscription.description")}</p>
       </div>
 
       {/* Current Plan */}
       <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold">Current Plan</h2>
-            <p className="text-muted-foreground text-sm">Barakah ERP - All Features</p>
+            <h2 className="text-lg font-semibold">{t("subscription.currentPlan")}</h2>
+            <p className="text-muted-foreground text-sm">{t("subscription.allFeatures")}</p>
           </div>
           {!isLoading && status && getStatusBadge(status.status)}
         </div>
@@ -74,31 +78,31 @@ export function Subscription() {
             <div className="bg-muted/40 rounded-xl p-4 border border-border text-center">
               <Clock className="w-5 h-5 text-primary mx-auto mb-2" />
               <p className="text-3xl font-bold text-primary">{status.daysRemaining}</p>
-              <p className="text-sm text-muted-foreground">Days Remaining</p>
+              <p className="text-sm text-muted-foreground">{t("subscription.daysRemaining")}</p>
             </div>
             <div className="bg-muted/40 rounded-xl p-4 border border-border text-center">
               <Calendar className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm font-semibold">{new Date(status.trialStartAt).toLocaleDateString("en-PK")}</p>
-              <p className="text-xs text-muted-foreground">Trial Started</p>
+              <p className="text-xs text-muted-foreground">{t("subscription.trialStarted")}</p>
             </div>
             <div className="bg-muted/40 rounded-xl p-4 border border-border text-center">
               <Calendar className="w-5 h-5 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm font-semibold">{new Date(status.trialEndAt).toLocaleDateString("en-PK")}</p>
-              <p className="text-xs text-muted-foreground">Trial Ends</p>
+              <p className="text-xs text-muted-foreground">{t("subscription.trialEnds")}</p>
             </div>
           </div>
         ) : null}
 
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center justify-between">
           <div>
-            <p className="font-semibold">Monthly Plan</p>
-            <p className="text-sm text-muted-foreground">Unlimited inventory, sales, Zakat, reports</p>
+            <p className="font-semibold">{t("subscription.monthlyPlan")}</p>
+            <p className="text-sm text-muted-foreground">{t("subscription.monthlyPlanDescription")}</p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">
               {status ? formatMoney(status.planPrice, status.planCurrency) : "PKR 10,000"}
             </p>
-            <p className="text-xs text-muted-foreground">per month</p>
+            <p className="text-xs text-muted-foreground">{t("subscription.perMonth")}</p>
           </div>
         </div>
       </div>
@@ -107,12 +111,12 @@ export function Subscription() {
       {!paymentResult ? (
         <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
           <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> Renew Your Subscription</h2>
-            <p className="text-muted-foreground text-sm mt-1">Select your preferred payment method and submit a request</p>
+            <h2 className="text-lg font-semibold flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> {t("subscription.renewSubscription")}</h2>
+            <p className="text-muted-foreground text-sm mt-1">{t("subscription.renewSubscriptionDescription")}</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Payment Method</Label>
+            <Label>{t("subscription.paymentMethod")}</Label>
             <div className="grid grid-cols-2 gap-3">
               {PAYMENT_METHODS.map((m) => (
                 <button
@@ -130,13 +134,13 @@ export function Subscription() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="txref">Transaction Reference <span className="text-muted-foreground font-normal">(optional)</span></Label>
-            <Input id="txref" placeholder="Enter your transaction ID after payment" value={txRef} onChange={e => setTxRef(e.target.value)} className="h-11" />
-            <p className="text-xs text-muted-foreground">You can submit your reference after making the payment</p>
+            <Label htmlFor="txref">{t("subscription.transactionReference")} <span className="text-muted-foreground font-normal">{t("subscription.optional")}</span></Label>
+            <Input id="txref" placeholder={t("subscription.transactionRefPlaceholder")} value={txRef} onChange={e => setTxRef(e.target.value)} className="h-11" />
+            <p className="text-xs text-muted-foreground">{t("subscription.transactionRefHint")}</p>
           </div>
 
           <Button onClick={handleSubmit} disabled={isSubmitting || !selectedMethod} className="w-full h-12 text-base" size="lg">
-            {isSubmitting ? "Submitting..." : "Submit Payment Request"}
+            {isSubmitting ? t("subscription.submitting") : t("subscription.submitPaymentRequest")}
           </Button>
         </div>
       ) : (
@@ -146,7 +150,7 @@ export function Subscription() {
               <CheckCircle2 className="w-6 h-6 text-green-500" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Payment Request Submitted!</h2>
+              <h2 className="text-lg font-semibold">{t("subscription.paymentRequestSubmitted")}</h2>
               <p className="text-muted-foreground text-sm">{paymentResult.message}</p>
             </div>
           </div>
@@ -154,17 +158,17 @@ export function Subscription() {
           <div className="bg-muted/50 border border-border rounded-xl p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <AlertCircle className="w-4 h-4 text-primary" />
-              Payment Instructions
+              {t("subscription.paymentInstructions")}
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">{paymentResult.paymentInstructions}</p>
           </div>
 
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm text-center text-muted-foreground">
-            Your account will be activated within <span className="font-semibold text-foreground">24 hours</span> after payment verification
+            {t("subscription.activationNotice")} <span className="font-semibold text-foreground">{t("subscription.hours24")}</span> {t("subscription.activationNoticeSuffix")}
           </div>
 
           <Button variant="outline" className="w-full" onClick={() => setPaymentResult(null)}>
-            Submit Another Request
+            {t("subscription.submitAnotherRequest")}
           </Button>
         </div>
       )}

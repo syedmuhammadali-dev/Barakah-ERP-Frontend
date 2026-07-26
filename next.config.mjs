@@ -2,7 +2,7 @@
 const isDevelopment = process.env.NODE_ENV !== "production";
 const apiTarget =
   process.env.NEXT_PUBLIC_API_TARGET?.trim() ||
-  (isDevelopment ? "http://127.0.0.1:3001" : "");
+  (isDevelopment ? "http://127.0.0.1:3002" : "");
 
 if (!apiTarget) {
   throw new Error(

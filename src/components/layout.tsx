@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Receipt,
   BarChart3,
   Calculator,
   Users,
@@ -40,7 +41,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { beginTransition } = useRouteTransition();
-  const { t } = useAppLocale();
+  const { t, isUrdu } = useAppLocale();
   const { data: profile } = useGetBusinessProfile({
     query: {
       queryKey: ["businessProfile"],
@@ -52,6 +53,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { name: t("nav.dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { name: t("nav.inventory"), href: "/inventory", icon: Package },
     { name: t("nav.sales"), href: "/sales", icon: ShoppingCart },
+    { name: t("nav.bills"), href: "/bills", icon: Receipt },
     { name: t("nav.reports"), href: "/reports", icon: BarChart3 },
     { name: t("nav.zakat"), href: "/zakat", icon: Calculator },
     { name: t("nav.salesmen"), href: "/salesmen", icon: Users },
@@ -85,7 +87,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
-        <Sidebar>
+        <Sidebar side={isUrdu ? "right" : "left"}>
           <SidebarHeader className="px-4 py-6 border-b border-sidebar-border">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold text-xl">

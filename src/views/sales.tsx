@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState } from "react";
 import {
   getGetSalesSummaryQueryKey,
   getListSalesQueryKey,
@@ -9,13 +9,14 @@ import {
   useListSales,
   useListSalesmen,
   useListProducts,
+  useGetBusinessProfile,
 } from "@barakah/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { Banknote, CreditCard, Download, Search, ShieldCheck, ShoppingCart, Wallet } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { Banknote, CreditCard, Download, Plus, Search, ShieldCheck, ShoppingCart, Trash2, Wallet } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,6 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -55,14 +55,32 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { useAppLocale } from "@/lib/i18n";
+import { generateBillPdf } from "@/lib/bill-pdf";
+
+const PAYMENT_METHODS = [
+  "cash",
+  "card",
+  "bank_transfer",
+  "jazzcash",
+  "easypaisa",
+  "sadapay",
+  "credit",
+  "other",
+] as const;
+
+const saleItemSchema = z.object({
+  productId: z.string().optional(),
+  productName: z.string().min(1, "Product name is required"),
+  quantity: z.coerce.number().positive("Quantity must be positive"),
+  unitPrice: z.coerce.number().min(0, "Price must be positive"),
+});
 
 const saleFormSchema = z.object({
   customerName: z.string().min(2, "Customer name is required"),
-  productName: z.string().optional(),
   salesmanId: z.string().optional(),
-  paymentMethod: z.enum(["cash", "card", "credit"]),
+  paymentMethod: z.enum(PAYMENT_METHODS),
   discount: z.coerce.number().min(0).default(0),
-  total: z.coerce.number().min(0, "Total must be positive"),
+  items: z.array(saleItemSchema).min(1, "Add at least one item"),
 });
 
 type SaleFormValues = z.infer<typeof saleFormSchema>;
@@ -76,6 +94,7 @@ export function Sales() {
   const createSale = useCreateSale();
   const { data: salesmen } = useListSalesmen();
   const { data: allProducts } = useListProducts();
+  const { data: businessProfile } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
   const { t } = useAppLocale();
 
   const { data: summary, isLoading: summaryLoading, error: summaryError } =
@@ -107,29 +126,42 @@ export function Sales() {
     );
   }, [sales, searchTerm]);
 
-  const [productSearch, setProductSearch] = useState("");
-  const [showProductDropdown, setShowProductDropdown] = useState(false);
-  const productInputRef = useRef<HTMLInputElement>(null);
+  const [openProductRow, setOpenProductRow] = useState<number | null>(null);
+  const [rowProductSearch, setRowProductSearch] = useState<Record<number, string>>({});
 
-  const filteredProducts = useMemo(() => {
-    if (!productSearch.trim()) return allProducts ?? [];
-    const q = productSearch.toLowerCase();
+  const getFilteredProducts = (query: string) => {
+    if (!query.trim()) return (allProducts ?? []).slice(0, 10);
+    const q = query.toLowerCase();
     return (allProducts ?? []).filter((p) =>
       p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
     ).slice(0, 10);
-  }, [allProducts, productSearch]);
+  };
 
   const form = useForm<SaleFormValues>({
     resolver: zodResolver(saleFormSchema),
     defaultValues: {
       customerName: "",
-      productName: "",
       salesmanId: "none",
       paymentMethod: "cash",
       discount: 0,
-      total: 0,
+      items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
     },
   });
+
+  const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
+
+  const watchedItems = form.watch("items");
+  const watchedDiscount = form.watch("discount");
+  const computedTotal = useMemo(() => {
+    const itemsTotal = (watchedItems ?? []).reduce(
+      (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
+      0,
+    );
+    return Math.max(0, itemsTotal - (Number(watchedDiscount) || 0));
+  }, [watchedItems, watchedDiscount]);
 
   const handleExportCsv = () => {
     const rows = [
@@ -169,28 +201,39 @@ export function Sales() {
       await createSale.mutateAsync({
         data: {
           customerName: values.customerName,
-          productName: values.productName || undefined,
           salesmanId:
             values.salesmanId && values.salesmanId !== "none"
               ? Number(values.salesmanId)
               : undefined,
           paymentMethod: values.paymentMethod,
           discount: values.discount,
-          total: values.total,
+          items: values.items.map((item) => ({
+            productId: item.productId ? Number(item.productId) : undefined,
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })),
         },
       });
       await queryClient.invalidateQueries({ queryKey: getListSalesQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetSalesSummaryQueryKey() });
       toast({
-        title: "Sale recorded",
-        description: `${values.customerName} invoice has been saved.`,
+        title: t("sales.saleRecorded"),
+        description: t("sales.saleSaved").replace("{name}", values.customerName),
       });
-      form.reset();
+      form.reset({
+        customerName: "",
+        salesmanId: "none",
+        paymentMethod: "cash",
+        discount: 0,
+        items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
+      });
+      setRowProductSearch({});
       setIsAddOpen(false);
     } catch {
       toast({
-        title: "Unable to save sale",
-        description: "Please check the form and try again.",
+        title: t("sales.unableToSaveSale"),
+        description: t("sales.checkForm"),
         variant: "destructive",
       });
     }
@@ -202,11 +245,75 @@ export function Sales() {
         return <Banknote className="w-4 h-4 text-emerald-500" />;
       case "card":
         return <CreditCard className="w-4 h-4 text-blue-500" />;
+      case "bank_transfer":
+        return <CreditCard className="w-4 h-4 text-indigo-500" />;
+      case "jazzcash":
+      case "easypaisa":
+      case "sadapay":
+        return <Wallet className="w-4 h-4 text-purple-500" />;
       case "credit":
         return <Wallet className="w-4 h-4 text-amber-500" />;
       default:
         return <Banknote className="w-4 h-4" />;
     }
+  };
+
+  const paymentMethodLabel = (method: string): string => {
+    switch (method) {
+      case "cash": return t("sales.paymentCash");
+      case "card": return t("sales.paymentCard");
+      case "bank_transfer": return t("sales.paymentBankTransfer");
+      case "jazzcash": return t("sales.paymentJazzcash");
+      case "easypaisa": return t("sales.paymentEasypaisa");
+      case "sadapay": return t("sales.paymentSadapay");
+      case "credit": return t("sales.paymentCredit");
+      case "other": return t("sales.paymentOther");
+      default: return method;
+    }
+  };
+
+  const statusLabel = (status: string): string => {
+    switch (status) {
+      case "settled": return t("sales.settled");
+      case "pending": return t("sales.pending");
+      case "credit": return t("sales.credit");
+      case "refunded": return t("sales.refunded");
+      default: return status;
+    }
+  };
+
+  const handleDownloadBill = (sale: NonNullable<typeof sales>[number]) => {
+    generateBillPdf({
+      shopName: businessProfile?.businessName || t("sales.businessNameFallback"),
+      invoiceId: sale.invoiceId,
+      customerName: sale.customerName,
+      saleDate: sale.saleDate,
+      paymentMethodLabel: paymentMethodLabel(sale.paymentMethod),
+      items: (sale.items && sale.items.length > 0)
+        ? sale.items.map((item) => ({
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            lineTotal: item.lineTotal,
+          }))
+        : [{ productName: sale.productName ?? t("sales.na"), quantity: 1, unitPrice: sale.total }],
+      discount: sale.discount,
+      total: sale.total,
+      labels: {
+        billTitle: t("sales.billTitle"),
+        billShop: t("sales.billShop"),
+        billCustomer: t("sales.billCustomer"),
+        billInvoice: t("sales.billInvoice"),
+        billDate: t("sales.billDate"),
+        billPayment: t("sales.billPayment"),
+        billItem: t("sales.billItem"),
+        billQty: t("sales.billQty"),
+        billUnitPrice: t("sales.billUnitPrice"),
+        billTotal: t("sales.billTotal"),
+        billDiscount: t("sales.billDiscount"),
+        billGrandTotal: t("sales.billGrandTotal"),
+      },
+    });
   };
 
   return (
@@ -244,58 +351,111 @@ export function Sales() {
                       <FormItem>
                         <FormLabel>{t("sales.customerName")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ahmed Traders" {...field} />
+                          <Input placeholder={t("sales.customerNamePlaceholder")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="productName"
-                    render={({ field }) => (
-                      <FormItem className="relative">
-                        <FormLabel>Product / Item</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Search product or type custom name"
-                            {...field}
-                            ref={productInputRef}
-                            value={productSearch}
-                            onChange={(e) => {
-                              setProductSearch(e.target.value);
-                              field.onChange(e.target.value);
-                              setShowProductDropdown(true);
-                            }}
-                            onFocus={() => setShowProductDropdown(true)}
-                            onBlur={() => setTimeout(() => setShowProductDropdown(false), 200)}
+                  <div className="space-y-3">
+                    <FormLabel>{t("sales.productItem")}</FormLabel>
+                    {itemFields.map((itemField, index) => {
+                      const query = rowProductSearch[index] ?? form.getValues(`items.${index}.productName`) ?? "";
+                      const options = openProductRow === index ? getFilteredProducts(query) : [];
+                      return (
+                        <div key={itemField.id} className="relative grid grid-cols-[1fr_70px_110px_auto] gap-2 items-start">
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.productName`}
+                            render={({ field }) => (
+                              <FormItem className="relative">
+                                <FormControl>
+                                  <Input
+                                    placeholder={t("sales.searchProductOrCustom")}
+                                    {...field}
+                                    onChange={(e) => {
+                                      field.onChange(e.target.value);
+                                      setRowProductSearch((prev) => ({ ...prev, [index]: e.target.value }));
+                                      form.setValue(`items.${index}.productId`, "");
+                                      setOpenProductRow(index);
+                                    }}
+                                    onFocus={() => setOpenProductRow(index)}
+                                    onBlur={() => setTimeout(() => setOpenProductRow((cur) => (cur === index ? null : cur)), 200)}
+                                  />
+                                </FormControl>
+                                {options.length > 0 && (
+                                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                    {options.map((p) => (
+                                      <button
+                                        key={p.id}
+                                        type="button"
+                                        className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          field.onChange(p.name);
+                                          form.setValue(`items.${index}.productId`, String(p.id));
+                                          form.setValue(`items.${index}.unitPrice`, p.salePrice);
+                                          setRowProductSearch((prev) => ({ ...prev, [index]: p.name }));
+                                          setOpenProductRow(null);
+                                        }}
+                                      >
+                                        <span className="font-medium">{p.name}</span>
+                                        <span className="text-muted-foreground ml-2 text-xs">{p.sku}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                        </FormControl>
-                        {showProductDropdown && filteredProducts.length > 0 && (
-                          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                            {filteredProducts.map((p) => (
-                              <button
-                                key={p.id}
-                                type="button"
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  setProductSearch(p.name);
-                                  field.onChange(p.name);
-                                  setShowProductDropdown(false);
-                                }}
-                              >
-                                <span className="font-medium">{p.name}</span>
-                                <span className="text-muted-foreground ml-2 text-xs">{p.sku}</span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input type="number" min="0" step="1" placeholder={t("sales.itemQuantity")} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.unitPrice`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input type="number" min="0" step="0.01" placeholder={t("sales.itemUnitPrice")} {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-9 w-9 p-0 text-destructive"
+                            disabled={itemFields.length === 1}
+                            onClick={() => removeItem(index)}
+                          >
+                            <span className="sr-only">{t("sales.removeItem")}</span>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendItem({ productId: "", productName: "", quantity: 1, unitPrice: 0 })}
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> {t("sales.addItem")}
+                    </Button>
+                  </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
@@ -310,7 +470,7 @@ export function Sales() {
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Assign salesman" />
+                                <SelectValue placeholder={t("sales.assignSalesman")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -335,13 +495,15 @@ export function Sales() {
                           <Select value={field.value} onValueChange={field.onChange}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select payment" />
+                                <SelectValue placeholder={t("sales.selectPayment")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="cash">Cash</SelectItem>
-                              <SelectItem value="card">Card</SelectItem>
-                              <SelectItem value="credit">Credit</SelectItem>
+                              {PAYMENT_METHODS.map((method) => (
+                                <SelectItem key={method} value={method}>
+                                  {paymentMethodLabel(method)}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -350,20 +512,7 @@ export function Sales() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="total"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("sales.totalPkr")}</FormLabel>
-                          <FormControl>
-                            <Input type="number" min="0" step="0.01" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <div className="grid grid-cols-2 gap-4 items-end">
                     <FormField
                       control={form.control}
                       name="discount"
@@ -377,10 +526,14 @@ export function Sales() {
                         </FormItem>
                       )}
                     />
+                    <div>
+                      <FormLabel>{t("sales.totalPkr")}</FormLabel>
+                      <p className="text-lg font-bold mt-2">{formatMoney(computedTotal)}</p>
+                    </div>
                   </div>
 
                   <Button type="submit" className="w-full" disabled={createSale.isPending}>
-                    {createSale.isPending ? "Saving..." : t("sales.saveSale")}
+                    {createSale.isPending ? t("sales.saving") : t("sales.saveSale")}
                   </Button>
                 </form>
               </Form>
@@ -414,7 +567,7 @@ export function Sales() {
                   {summary?.dailyChange != null && summary.dailyChange > 0 ? "+" : ""}
                   {formatPercent(summary?.dailyChange ?? 0, 0)}
                 </span>{" "}
-                vs yesterday
+                {t("dashboard.vsYesterday")}
               </p>
             )}
             {summaryError ? (
@@ -487,7 +640,7 @@ export function Sales() {
                 {t("sales.lastAudit")}{" "}
                 {summary?.lastAuditDate
                   ? format(parseISO(summary.lastAuditDate), "MMM d, yyyy")
-                  : "N/A"}
+                  : t("sales.na")}
               </p>
             )}
           </CardContent>
@@ -509,7 +662,7 @@ export function Sales() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[150px] bg-muted/50 border-none">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder={t("sales.statusFilterPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("sales.allStatus")}</SelectItem>
@@ -539,11 +692,12 @@ export function Sales() {
                   <TableHead>{t("sales.payment")}</TableHead>
                   <TableHead className="text-right">{t("sales.total")}</TableHead>
                   <TableHead>{t("sales.status")}</TableHead>
+                  <TableHead className="text-right">{t("sales.downloadBill")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSales.map((sale) => (
-                  <TableRow key={sale.id} className="hover:bg-muted/20 cursor-pointer">
+                  <TableRow key={sale.id} className="hover:bg-muted/20">
                     <TableCell className="font-mono text-sm font-medium">
                       {sale.invoiceId}
                     </TableCell>
@@ -562,9 +716,9 @@ export function Sales() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2 text-sm capitalize">
+                      <div className="flex items-center gap-2 text-sm">
                         {getPaymentIcon(sale.paymentMethod)}
-                        {sale.paymentMethod}
+                        {paymentMethodLabel(sale.paymentMethod)}
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-medium">
@@ -583,14 +737,19 @@ export function Sales() {
                                 : "bg-secondary/20 text-secondary-foreground border-secondary/30"
                         }
                       >
-                        {sale.status.toUpperCase()}
+                        {statusLabel(sale.status)}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => handleDownloadBill(sale)}>
+                        <Download className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
                 {!salesLoading && filteredSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       {salesError ? t("sales.transactionsUnavailable") : t("sales.noTransactions")}
                     </TableCell>
                   </TableRow>

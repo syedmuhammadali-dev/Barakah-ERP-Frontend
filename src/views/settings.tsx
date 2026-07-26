@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { useAppLocale } from "@/lib/i18n";
 
 const formSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -38,6 +39,7 @@ export function Settings() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { t } = useAppLocale();
   const [saving, setSaving] = useState(false);
   
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useGetSettings();
@@ -129,8 +131,8 @@ export function Settings() {
       await Promise.all(promises);
 
       toast({
-        title: "Settings Updated",
-        description: "Your configuration changes have been saved.",
+        title: t("settings.settingsUpdated"),
+        description: t("settings.settingsUpdatedDescription"),
       });
 
       queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
@@ -139,8 +141,8 @@ export function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
     } catch {
       toast({
-        title: "Update Failed",
-        description: "An error occurred while saving settings.",
+        title: t("settings.updateFailed"),
+        description: t("settings.updateFailedDescription"),
         variant: "destructive",
       });
     } finally {
@@ -151,9 +153,9 @@ export function Settings() {
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Shop Configuration</h1>
-        <p className="text-muted-foreground mt-1">Manage store identity, compliance, and localization</p>
-        {error ? <p className="mt-2 text-sm text-destructive">Some data could not be loaded. You can still edit and save the form.</p> : null}
+        <h1 className="text-3xl font-bold tracking-tight">{t("settings.title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("settings.description")}</p>
+        {error ? <p className="mt-2 text-sm text-destructive">{t("settings.loadError")}</p> : null}
       </div>
 
       <Form {...form}>
@@ -161,9 +163,9 @@ export function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-1 space-y-2">
               <h3 className="text-lg font-medium flex items-center gap-2">
-                <Store className="w-5 h-5 text-primary" /> General Profile
+                <Store className="w-5 h-5 text-primary" /> {t("settings.generalProfile")}
               </h3>
-              <p className="text-sm text-muted-foreground">Public-facing identity and contact information.</p>
+              <p className="text-sm text-muted-foreground">{t("settings.generalProfileDescription")}</p>
             </div>
             <Card className="md:col-span-3">
               <CardContent className="pt-6 space-y-4">
@@ -173,9 +175,9 @@ export function Settings() {
                     name="shopName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Shop Name</FormLabel>
+                        <FormLabel>{t("settings.shopName")}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Barakah Retail" {...field} disabled={isLoading} />
+                          <Input placeholder={t("settings.shopNamePlaceholder")} {...field} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -186,11 +188,11 @@ export function Settings() {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
+                        <FormLabel>{t("settings.phoneNumber")}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Phone className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input className="pl-9" placeholder="+92 300 1234567" {...field} disabled={isLoading} />
+                            <Input className="pl-9" placeholder={t("settings.phonePlaceholder")} {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -198,17 +200,17 @@ export function Settings() {
                     )}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Account Email</FormLabel>
-                        <FormDescription className="text-xs">Login email used at signup</FormDescription>
+                        <FormLabel>{t("settings.accountEmail")}</FormLabel>
+                        <FormDescription className="text-xs">{t("settings.accountEmailDescription")}</FormDescription>
                         <FormControl>
-                          <Input type="email" placeholder="admin@barakah.com" {...field} disabled={isLoading} />
+                          <Input type="email" placeholder={t("settings.accountEmailPlaceholder")} {...field} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -219,28 +221,28 @@ export function Settings() {
                     name="contactEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Email</FormLabel>
-                        <FormDescription className="text-xs">Public email for your customers</FormDescription>
+                        <FormLabel>{t("settings.contactEmail")}</FormLabel>
+                        <FormDescription className="text-xs">{t("settings.contactEmailDescription")}</FormDescription>
                         <FormControl>
-                          <Input type="email" placeholder="contact@barakah.com" {...field} disabled={isLoading} />
+                          <Input type="email" placeholder={t("settings.contactEmailPlaceholder")} {...field} disabled={isLoading} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Physical Address</FormLabel>
+                        <FormLabel>{t("settings.physicalAddress")}</FormLabel>
                         <FormControl>
                           <div className="relative">
                             <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input className="pl-9" placeholder="Riyadh, KSA" {...field} disabled={isLoading} />
+                            <Input className="pl-9" placeholder={t("settings.physicalAddressPlaceholder")} {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage />
@@ -257,9 +259,9 @@ export function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-1 space-y-2">
               <h3 className="text-lg font-medium flex items-center gap-2">
-                <MoonStar className="w-5 h-5 text-primary" /> Islamic Mode
+                <MoonStar className="w-5 h-5 text-primary" /> {t("settings.islamicMode")}
               </h3>
-              <p className="text-sm text-muted-foreground">Configure Zakat threshold and Sharia-compliant features.</p>
+              <p className="text-sm text-muted-foreground">{t("settings.islamicModeDescription")}</p>
             </div>
             <Card className="md:col-span-3 border-primary/20">
               <CardContent className="pt-6 space-y-6">
@@ -269,9 +271,9 @@ export function Settings() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base text-primary font-bold">Islamic Business Mode</FormLabel>
+                        <FormLabel className="text-base text-primary font-bold">{t("settings.islamicBusinessMode")}</FormLabel>
                         <FormDescription>
-                          Activates Zakat calculation module, Amanat product tagging, and disables interest-based fields.
+                          {t("settings.islamicBusinessModeDescription")}
                         </FormDescription>
                       </div>
                       <FormControl>
@@ -285,7 +287,7 @@ export function Settings() {
                     </FormItem>
                   )}
                 />
-                
+
                 {form.watch("islamicModeEnabled") && (
                   <div className="pl-2 border-l-2 border-primary/30 py-2">
                     <FormField
@@ -293,8 +295,8 @@ export function Settings() {
                       name="nisabThreshold"
                       render={({ field }) => (
                         <FormItem className="max-w-xs">
-                          <FormLabel>Nisab Threshold (PKR)</FormLabel>
-                          <FormDescription>Current value of 85 grams of gold.</FormDescription>
+                          <FormLabel>{t("settings.nisabThreshold")}</FormLabel>
+                          <FormDescription>{t("settings.nisabThresholdDescription")}</FormDescription>
                           <FormControl>
                             <Input type="number" {...field} disabled={isLoading} />
                           </FormControl>
@@ -313,9 +315,9 @@ export function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-1 space-y-2">
               <h3 className="text-lg font-medium flex items-center gap-2">
-                <Globe className="w-5 h-5 text-primary" /> Localization
+                <Globe className="w-5 h-5 text-primary" /> {t("settings.localization")}
               </h3>
-              <p className="text-sm text-muted-foreground">Currency, taxes, and regional settings.</p>
+              <p className="text-sm text-muted-foreground">{t("settings.localizationDescription")}</p>
             </div>
             <Card className="md:col-span-3">
               <CardContent className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -324,11 +326,11 @@ export function Settings() {
                   name="baseCurrency"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Base Currency</FormLabel>
+                      <FormLabel>{t("settings.baseCurrency")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger disabled={isLoading}>
-                            <SelectValue placeholder="Select currency" />
+                            <SelectValue placeholder={t("settings.selectCurrency")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -342,17 +344,17 @@ export function Settings() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="timezone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Timezone</FormLabel>
+                      <FormLabel>{t("settings.timezone")}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger disabled={isLoading}>
-                            <SelectValue placeholder="Select timezone" />
+                            <SelectValue placeholder={t("settings.selectTimezone")} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -370,13 +372,13 @@ export function Settings() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="vatRate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Standard VAT Rate (%)</FormLabel>
+                      <FormLabel>{t("settings.vatRate")}</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} disabled={isLoading} />
                       </FormControl>
@@ -393,9 +395,9 @@ export function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="md:col-span-1 space-y-2">
               <h3 className="text-lg font-medium flex items-center gap-2">
-                <Bell className="w-5 h-5 text-primary" /> Notifications
+                <Bell className="w-5 h-5 text-primary" /> {t("settings.notifications")}
               </h3>
-              <p className="text-sm text-muted-foreground">How the system communicates with you.</p>
+              <p className="text-sm text-muted-foreground">{t("settings.notificationsDescription")}</p>
             </div>
             <Card className="md:col-span-3">
               <CardContent className="pt-6 space-y-4">
@@ -405,8 +407,8 @@ export function Settings() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/50 p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Email Notifications</FormLabel>
-                        <FormDescription>Receive daily summaries and critical alerts via email.</FormDescription>
+                        <FormLabel className="text-base">{t("settings.emailNotifications")}</FormLabel>
+                        <FormDescription>{t("settings.emailNotificationsDescription")}</FormDescription>
                       </div>
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
@@ -420,8 +422,8 @@ export function Settings() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/50 p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Push Notifications</FormLabel>
-                        <FormDescription>Receive in-app notifications for low stock and pending returns.</FormDescription>
+                        <FormLabel className="text-base">{t("settings.pushNotifications")}</FormLabel>
+                        <FormDescription>{t("settings.pushNotificationsDescription")}</FormDescription>
                       </div>
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
@@ -435,8 +437,8 @@ export function Settings() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/50 p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">SMS Alerts</FormLabel>
-                        <FormDescription>Receive text messages for high-value transactions (Requires Add-on).</FormDescription>
+                        <FormLabel className="text-base">{t("settings.smsAlerts")}</FormLabel>
+                        <FormDescription>{t("settings.smsAlertsDescription")}</FormDescription>
                       </div>
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} disabled />
@@ -446,13 +448,13 @@ export function Settings() {
                 />
               </CardContent>
               <CardFooter className="bg-muted/30 border-t border-border/50 flex justify-end py-4">
-                <Button 
-                  type="submit" 
-                  size="lg" 
+                <Button
+                  type="submit"
+                  size="lg"
                   className="font-bold min-w-[150px]"
                   disabled={saving || isLoading}
                 >
-                  {saving ? "Saving..." : "Save Configuration"}
+                  {saving ? t("settings.saving") : t("settings.saveConfiguration")}
                 </Button>
               </CardFooter>
             </Card>

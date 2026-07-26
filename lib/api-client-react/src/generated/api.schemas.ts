@@ -118,6 +118,8 @@ export interface SubscriptionStatus {
   planPrice: number;
   planCurrency: string;
   isActive: boolean;
+  restricted?: boolean;
+  pausedByAdmin?: boolean;
 }
 
 export type PaymentRequestInputMethod =
@@ -251,7 +253,12 @@ export type SalePaymentMethod =
 export const SalePaymentMethod = {
   cash: "cash",
   card: "card",
+  bank_transfer: "bank_transfer",
+  jazzcash: "jazzcash",
+  easypaisa: "easypaisa",
+  sadapay: "sadapay",
   credit: "credit",
+  other: "other",
 } as const;
 
 export type SaleStatus = (typeof SaleStatus)[keyof typeof SaleStatus];
@@ -262,6 +269,24 @@ export const SaleStatus = {
   refunded: "refunded",
   pending: "pending",
 } as const;
+
+export interface SaleItem {
+  id?: number;
+  /** @nullable */
+  productId?: number | null;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal?: number;
+}
+
+export interface SaleItemInput {
+  /** @nullable */
+  productId?: number | null;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
 
 export interface Sale {
   id: number;
@@ -284,6 +309,7 @@ export interface Sale {
   zakatAmount: number;
   isCompliant: boolean;
   saleDate: string;
+  items?: SaleItem[];
 }
 
 export type SaleInputPaymentMethod =
@@ -292,7 +318,12 @@ export type SaleInputPaymentMethod =
 export const SaleInputPaymentMethod = {
   cash: "cash",
   card: "card",
+  bank_transfer: "bank_transfer",
+  jazzcash: "jazzcash",
+  easypaisa: "easypaisa",
+  sadapay: "sadapay",
   credit: "credit",
+  other: "other",
 } as const;
 
 export interface SaleInput {
@@ -303,9 +334,10 @@ export interface SaleInput {
   salesmanId?: number | null;
   paymentMethod: SaleInputPaymentMethod;
   discount?: number;
-  total: number;
+  total?: number;
   /** @nullable */
   productName?: string | null;
+  items?: SaleItemInput[];
 }
 
 /**
@@ -616,3 +648,46 @@ export const GetRevenueReportPeriod = {
   month: "month",
   year: "year",
 } as const;
+
+export interface BillItem {
+  id: number;
+  /** @nullable */
+  productId?: number | null;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+export interface BillItemInput {
+  /** @nullable */
+  productId?: number | null;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface Bill {
+  id: number;
+  billNumber: string;
+  supplierName: string;
+  billDate: string;
+  /** @nullable */
+  sourceFileName?: string | null;
+  total: number;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+  items?: BillItem[];
+}
+
+export interface BillInput {
+  billNumber?: string;
+  supplierName: string;
+  billDate?: string;
+  /** @nullable */
+  sourceFileName?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  items: BillItemInput[];
+}

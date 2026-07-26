@@ -55,19 +55,19 @@ export function Landing() {
               href="#features"
               className="hover:text-foreground transition-colors"
             >
-              Features
+              {t("landing.navFeatures")}
             </a>
             <a
               href="#compliance"
               className="hover:text-foreground transition-colors"
             >
-              Islamic Compliance
+              {t("landing.navCompliance")}
             </a>
             <a
               href="#pricing"
               className="hover:text-foreground transition-colors"
             >
-              Pricing
+              {t("landing.navPricing")}
             </a>
           </nav>
           <div className="flex items-center gap-4">
@@ -101,17 +101,14 @@ export function Landing() {
             transition={{ duration: 0.5 }}
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 border border-primary/20">
-              <ShieldCheck className="w-4 h-4" /> Trusted by 500+ Retailers in
-              the GCC
+              <ShieldCheck className="w-4 h-4" /> {t("landing.trustBadge")}
             </div>
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-              Premium Retail Management,{" "}
-              <span className="text-primary">Ethically Built.</span>
+              {t("landing.heroTitle")}{" "}
+              <span className="text-primary">{t("landing.heroTitleHighlight")}</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Barakah ERP gives you cockpit-level control over your inventory,
-              sales, and Islamic compliance. Run your business with precision,
-              transparency, and peace of mind.
+              {t("landing.heroSubtitle")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
@@ -146,11 +143,10 @@ export function Landing() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Command Your Business
+              {t("landing.featuresTitle")}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to operate a high-volume retail store,
-              organized into a fast, intuitive interface.
+              {t("landing.featuresSubtitle")}
             </p>
           </div>
 
@@ -160,10 +156,9 @@ export function Landing() {
                 <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
                   <BarChart3 className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Real-time Analytics</h3>
+                <h3 className="text-xl font-bold mb-3">{t("landing.feature1Title")}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Monitor daily sales, profit margins, and salesman performance
-                  instantly. Know exactly where your business stands.
+                  {t("landing.feature1Desc")}
                 </p>
               </CardContent>
             </Card>
@@ -173,11 +168,9 @@ export function Landing() {
                 <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
                   <Store className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Inventory Mastery</h3>
+                <h3 className="text-xl font-bold mb-3">{t("landing.feature2Title")}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Track thousands of SKUs. Set automated low-stock alerts,
-                  manage supplier returns, and handle Amanat (consignment) goods
-                  separately.
+                  {t("landing.feature2Desc")}
                 </p>
               </CardContent>
             </Card>
@@ -187,11 +180,9 @@ export function Landing() {
                 <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
                   <Calculator className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold mb-3">Automated Zakat</h3>
+                <h3 className="text-xl font-bold mb-3">{t("landing.feature3Title")}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  We calculate your net Zakatable assets dynamically (Inventory
-                  + Cash - Debts). Never miss a payment or miscalculate your
-                  obligations.
+                  {t("landing.feature3Desc")}
                 </p>
               </CardContent>
             </Card>
@@ -205,20 +196,17 @@ export function Landing() {
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-8">
               <h2 className="text-3xl md:text-5xl font-bold leading-tight">
-                Built for Islamic Commerce.
+                {t("landing.complianceTitle")}
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Traditional ERPs mix interest, unclear liabilities, and
-                complicated inventory models. Barakah ERP separates Amanat
-                (trust) items, strips out Riba (interest) logic, and keeps your
-                Zakat calculations perfectly aligned with the Hawl.
+                {t("landing.complianceDesc")}
               </p>
               <ul className="space-y-4">
                 {[
-                  "Clear separation of Amanat and owned inventory",
-                  "Automated Zakat threshold (Nisab) monitoring",
-                  "Riba-free financial reporting",
-                  "Transparent supplier return ledgers",
+                  t("landing.complianceItem1"),
+                  t("landing.complianceItem2"),
+                  t("landing.complianceItem3"),
+                  t("landing.complianceItem4"),
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
@@ -234,7 +222,7 @@ export function Landing() {
                   <div className="flex justify-between items-center mb-8">
                     <div>
                       <p className="text-sm font-medium text-primary uppercase tracking-wider mb-2">
-                        Net Zakatable Assets
+                        {t("landing.netZakatableAssets")}
                       </p>
                       <h3 className="text-4xl font-bold">PKR 485,200</h3>
                     </div>
@@ -243,23 +231,23 @@ export function Landing() {
                   <div className="space-y-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Inventory Value
+                        {t("landing.inventoryValueLabel")}
                       </span>
                       <span className="font-mono">PKR 320,000</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Cash on Hand
+                        {t("landing.cashOnHandLabel")}
                       </span>
                       <span className="font-mono">PKR 185,200</span>
                     </div>
                     <div className="flex justify-between text-sm text-destructive">
-                      <span>Deductible Debts</span>
+                      <span>{t("landing.deductibleDebtsLabel")}</span>
                       <span className="font-mono">- PKR 20,000</span>
                     </div>
                     <div className="h-px bg-border my-2" />
                     <div className="flex justify-between font-bold text-primary">
-                      <span>Zakat Due (2.5%)</span>
+                      <span>{t("landing.zakatDueLabel")}</span>
                       <span>PKR 12,130</span>
                     </div>
                   </div>
@@ -277,37 +265,32 @@ export function Landing() {
       >
         <div className="container mx-auto max-w-5xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Simple, Transparent Pricing
+            {t("landing.pricingTitle")}
           </h2>
           <p className="text-muted-foreground mb-16 max-w-2xl mx-auto">
-            No hidden fees, no complex tiers. Just a powerful platform for your
-            business.
+            {t("landing.pricingSubtitle")}
           </p>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
             <Card className="border-border">
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-2">Standard</h3>
+                <h3 className="text-2xl font-bold mb-2">{t("landing.standardPlan")}</h3>
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-4xl font-bold">PKR 299</span>
-                  <span className="text-muted-foreground">/month</span>
+                  <span className="text-muted-foreground">{t("landing.perMonth")}</span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Up to 3
-                    stores
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature1")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Unlimited
-                    products
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature2")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Zakat
-                    calculator
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature3")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Basic
-                    reporting
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature4")}
                   </li>
                 </ul>
                 <Button
@@ -323,30 +306,26 @@ export function Landing() {
 
             <Card className="border-primary shadow-[0_0_30px_-10px_rgba(255,193,7,0.3)] relative">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
-                RECOMMENDED
+                {t("landing.recommended")}
               </div>
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
+                <h3 className="text-2xl font-bold mb-2">{t("landing.enterprisePlan")}</h3>
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-4xl font-bold">PKR 799</span>
-                  <span className="text-muted-foreground">/month</span>
+                  <span className="text-muted-foreground">{t("landing.perMonth")}</span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Unlimited
-                    stores
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature1")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Advanced
-                    API access
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature2")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Salesman
-                    commissions tracking
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature3")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> Priority
-                    24/7 support
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature4")}
                   </li>
                 </ul>
                 <Button
@@ -373,16 +352,16 @@ export function Landing() {
           </div>
           <div className="flex gap-6">
             <AppLink href="/privacy" className="hover:text-foreground">
-              Privacy Policy
+              {t("landing.footerPrivacy")}
             </AppLink>
             <AppLink href="/terms" className="hover:text-foreground">
-              Terms of Service
+              {t("landing.footerTerms")}
             </AppLink>
             <AppLink href="/subscription" className="hover:text-foreground">
-              Contact Support
+              {t("landing.footerContact")}
             </AppLink>
           </div>
-          <p>{"\u00A9"} {new Date().getFullYear()} Barakah ERP. All rights reserved.</p>
+          <p>{"\u00A9"} {new Date().getFullYear()} Barakah ERP. {t("landing.footerRights")}</p>
         </div>
       </footer>
     </div>

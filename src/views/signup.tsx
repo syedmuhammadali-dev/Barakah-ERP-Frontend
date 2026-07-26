@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppLocale } from "@/lib/i18n";
 import { AppLink, useRouteTransition } from "@/components/route-transition";
@@ -109,6 +109,13 @@ export function Signup() {
                 <LanguageToggle />
               </div>
             </div>
+            <AppLink
+              href="/"
+              className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t("auth.backToHome")}
+            </AppLink>
           </CardHeader>
           <CardContent>
             <form className="space-y-5" onSubmit={onSubmit}>
