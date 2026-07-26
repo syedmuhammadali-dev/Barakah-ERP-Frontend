@@ -26,7 +26,7 @@ export function Subscription() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentResult, setPaymentResult] = useState<{ message: string; paymentInstructions: string } | null>(null);
 
-  const { data: status, isLoading } = useGetSubscriptionStatus({
+  const { data: status, isLoading, error: statusError } = useGetSubscriptionStatus({
     query: { queryKey: ["subscriptionStatus"], refetchInterval: 60_000 },
   });
   const requestPayment = useRequestPayment();
@@ -73,6 +73,8 @@ export function Subscription() {
 
         {isLoading ? (
           <div className="h-20 animate-pulse bg-muted rounded-lg" />
+        ) : statusError ? (
+          <p className="text-xs text-destructive">{t("subscription.statusUnavailable")}</p>
         ) : status ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-muted/40 rounded-xl p-4 border border-border text-center">

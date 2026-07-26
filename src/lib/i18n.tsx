@@ -485,11 +485,19 @@ const messages = {
     route: {
       loading: "Loading page...",
     },
+    notFound: {
+      title: "Page Not Found",
+      description: "The page you're looking for doesn't exist or may have been moved.",
+      backToDashboard: "Back to Dashboard",
+    },
     errors: {
       unavailable: "unavailable",
       error: "Error",
       notFound: "Not found",
       failed: "Failed",
+      somethingWentWrong: "Something went wrong",
+      unexpectedError: "An unexpected error occurred. You can try again, or come back later.",
+      tryAgain: "Try again",
     },
     bills: {
       title: "Bills",
@@ -606,6 +614,7 @@ const messages = {
       restrictedTitle: "Your subscription time is out",
       restrictedMessage: "Please subscribe to the plan to continue adding or editing data. You can still view your existing data.",
       restrictedPaused: "Your account has been paused by the administrator. Please contact support or renew your plan.",
+      statusUnavailable: "Subscription status unavailable.",
       expiredGuardTitle: "Subscription Expired",
       expiredGuardMessage: "Your free trial has ended or your subscription has expired. Please renew to continue using Barakah ERP.",
       renewNow: "Renew Now",
@@ -1085,11 +1094,19 @@ const messages = {
     route: {
       loading: "صفحہ لوڈ ہو رہا ہے...",
     },
+    notFound: {
+      title: "صفحہ نہیں ملا",
+      description: "جو صفحہ آپ ڈھونڈ رہے ہیں وہ موجود نہیں ہے یا منتقل ہو چکا ہے۔",
+      backToDashboard: "ڈیش بورڈ پر واپس",
+    },
     errors: {
       unavailable: "دستیاب نہیں",
       error: "خرابی",
       notFound: "نہیں ملا",
       failed: "ناکام",
+      somethingWentWrong: "کچھ غلط ہو گیا",
+      unexpectedError: "ایک غیر متوقع خرابی پیش آگئی۔ آپ دوبارہ کوشش کر سکتے ہیں یا بعد میں واپس آئیں۔",
+      tryAgain: "دوبارہ کوشش کریں",
     },
     bills: {
       title: "بلز",
@@ -1206,6 +1223,7 @@ const messages = {
       restrictedTitle: "آپ کی سبسکرپشن کا وقت ختم ہو گیا ہے",
       restrictedMessage: "ڈیٹا شامل یا ترمیم جاری رکھنے کے لیے براہ کرم پلان سبسکرائب کریں۔ آپ اب بھی اپنا موجودہ ڈیٹا دیکھ سکتے ہیں۔",
       restrictedPaused: "آپ کا اکاؤنٹ ایڈمنسٹریٹر نے روک دیا ہے۔ براہ کرم سپورٹ سے رابطہ کریں یا اپنا پلان ری نیو کریں۔",
+      statusUnavailable: "سبسکرپشن اسٹیٹس دستیاب نہیں۔",
       expiredGuardTitle: "سبسکرپشن ختم ہو گئی",
       expiredGuardMessage: "آپ کا مفت ٹرائل ختم ہو گیا ہے یا آپ کی سبسکرپشن ختم ہو چکی ہے۔ Barakah ERP استعمال جاری رکھنے کے لیے براہ کرم ری نیو کریں۔",
       renewNow: "ابھی ری نیو کریں",

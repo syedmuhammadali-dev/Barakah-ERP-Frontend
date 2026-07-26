@@ -106,9 +106,11 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
               variant="outline"
               className="flex-1"
               size="lg"
-              onClick={() => router.push("/subscription")}
+              asChild
             >
-              {t("subscription.contactSupport")}
+              <a href="mailto:support@barakah-erp.com">
+                {t("subscription.contactSupport")}
+              </a>
             </Button>
           </div>
         </div>
