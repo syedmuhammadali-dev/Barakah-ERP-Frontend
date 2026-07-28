@@ -296,138 +296,138 @@ export function Inventory() {
             </AppLink>
           </Button>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="w-4 h-4 mr-2" /> {t("inventory.addProduct")}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[640px]">
-            <DialogHeader>
-              <DialogTitle>{t("inventory.addNewProduct")}</DialogTitle>
-              <DialogDescription>{t("inventory.addNewDescription")}</DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={onSubmit} className="space-y-4 pt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.productName")}</FormLabel>
-                      <FormControl>
-                        <Autocomplete
-                          value={field.value}
-                          onChange={field.onChange}
-                          suggestions={businessTypeConfig.commonItems}
-                          placeholder={t("inventory.searchProductNamePlaceholder")}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="sku" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.sku")}</FormLabel>
-                      <FormControl><Input placeholder={t("inventory.skuPlaceholder")} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="category" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.category")}</FormLabel>
-                      <FormControl>
-                        <Autocomplete
-                          value={field.value}
-                          onChange={field.onChange}
-                          suggestions={businessTypeConfig.defaultCategories}
-                          placeholder={t("inventory.searchCategoryPlaceholder")}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="brand" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.brand")}</FormLabel>
-                      <FormControl><Input placeholder={t("inventory.brandPlaceholder")} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="salesmanName" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.salesmanLabel")}</FormLabel>
-                      <FormControl><Input placeholder={t("inventory.assignedSalesmanPlaceholder")} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <BusinessTypeExtraFields
-                  fields={businessTypeConfig.extraFields}
-                  values={addExtraFields}
-                  onChange={(key, value) => setAddExtraFields((prev) => ({ ...prev, [key]: value }))}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="salePrice" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.salePrice")}</FormLabel>
-                      <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="margin" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.marginPercent")}</FormLabel>
-                      <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="stockLevel" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.stockLevel")}</FormLabel>
-                      <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="maxStock" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("inventory.maxStock")}</FormLabel>
-                      <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <div className="flex items-center gap-6">
-                  <FormField control={form.control} name="isAmanat" render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <input type="checkbox" checked={field.value} onChange={field.onChange} />
-                      </FormControl>
-                      <Label>{t("inventory.amanatItem")}</Label>
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="isReturnable" render={({ field }) => (
-                    <FormItem className="flex items-center gap-2 space-y-0">
-                      <FormControl>
-                        <input type="checkbox" checked={field.value} onChange={field.onChange} />
-                      </FormControl>
-                      <Label>{t("inventory.returnable")}</Label>
-                    </FormItem>
-                  )} />
-                </div>
-                <Button type="submit" className="w-full" disabled={createProduct.isPending}>
-                  {createProduct.isPending ? t("inventory.saving") : t("inventory.saveProduct")}
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-2" /> {t("inventory.addProduct")}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-160">
+              <DialogHeader>
+                <DialogTitle>{t("inventory.addNewProduct")}</DialogTitle>
+                <DialogDescription>{t("inventory.addNewDescription")}</DialogDescription>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={onSubmit} className="space-y-4 pt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="name" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.productName")}</FormLabel>
+                        <FormControl>
+                          <Autocomplete
+                            value={field.value}
+                            onChange={field.onChange}
+                            suggestions={businessTypeConfig.commonItems}
+                            placeholder={t("inventory.searchProductNamePlaceholder")}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="sku" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.sku")}</FormLabel>
+                        <FormControl><Input placeholder={t("inventory.skuPlaceholder")} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="category" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.category")}</FormLabel>
+                        <FormControl>
+                          <Autocomplete
+                            value={field.value}
+                            onChange={field.onChange}
+                            suggestions={businessTypeConfig.defaultCategories}
+                            placeholder={t("inventory.searchCategoryPlaceholder")}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="brand" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.brand")}</FormLabel>
+                        <FormControl><Input placeholder={t("inventory.brandPlaceholder")} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="salesmanName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.salesmanLabel")}</FormLabel>
+                        <FormControl><Input placeholder={t("inventory.assignedSalesmanPlaceholder")} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <BusinessTypeExtraFields
+                    fields={businessTypeConfig.extraFields}
+                    values={addExtraFields}
+                    onChange={(key, value) => setAddExtraFields((prev) => ({ ...prev, [key]: value }))}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="salePrice" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.salePrice")}</FormLabel>
+                        <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="margin" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.marginPercent")}</FormLabel>
+                        <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="stockLevel" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.stockLevel")}</FormLabel>
+                        <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="maxStock" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.maxStock")}</FormLabel>
+                        <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <FormField control={form.control} name="isAmanat" render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <input type="checkbox" checked={field.value} onChange={field.onChange} />
+                        </FormControl>
+                        <Label>{t("inventory.amanatItem")}</Label>
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="isReturnable" render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <input type="checkbox" checked={field.value} onChange={field.onChange} />
+                        </FormControl>
+                        <Label>{t("inventory.returnable")}</Label>
+                      </FormItem>
+                    )} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={createProduct.isPending}>
+                    {createProduct.isPending ? t("inventory.saving") : t("inventory.saveProduct")}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[640px]">
+        <DialogContent className="sm:max-w-160">
           <DialogHeader>
             <DialogTitle>{t("inventory.editProductTitle")}</DialogTitle>
             <DialogDescription>
@@ -530,7 +530,7 @@ export function Inventory() {
       </Dialog>
 
       <Dialog open={isAdjustOpen} onOpenChange={setIsAdjustOpen}>
-        <DialogContent className="sm:max-w-[420px]">
+        <DialogContent className="sm:max-w-105">
           <DialogHeader>
             <DialogTitle>{t("inventory.adjustStock")}</DialogTitle>
             <DialogDescription>
@@ -569,7 +569,7 @@ export function Inventory() {
       </Dialog>
 
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="sm:max-w-[520px]">
+        <DialogContent className="sm:max-w-130">
           <DialogHeader>
             <DialogTitle>{t("inventory.productSnapshot")}</DialogTitle>
             <DialogDescription>
@@ -704,10 +704,10 @@ export function Inventory() {
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow>
-                  <TableHead className="w-[100px]">{t("inventory.sku")}</TableHead>
+                  <TableHead className="w-25">{t("inventory.sku")}</TableHead>
                   <TableHead>{t("inventory.productDetails")}</TableHead>
                   <TableHead>{t("inventory.priceMargin")}</TableHead>
-                  <TableHead className="w-[200px]">{t("inventory.stockLevel")}</TableHead>
+                  <TableHead className="w-50">{t("inventory.stockLevel")}</TableHead>
                   <TableHead>{t("inventory.status")}</TableHead>
                   <TableHead className="text-right">{t("inventory.actions")}</TableHead>
                 </TableRow>
