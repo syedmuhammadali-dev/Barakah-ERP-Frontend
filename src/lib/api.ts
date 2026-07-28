@@ -17,7 +17,17 @@ export async function apiRequest<T>(
   });
 
   if (!response.ok) {
-    const message = await response.text().catch(() => "");
+    const rawText = await response.text().catch(() => "");
+    let message = "";
+    if (rawText) {
+      try {
+        const parsed = JSON.parse(rawText) as Record<string, unknown>;
+        const field = parsed.message ?? parsed.error ?? parsed.detail;
+        message = typeof field === "string" ? field : "";
+      } catch {
+        message = rawText;
+      }
+    }
     throw new Error(message || `Request failed with ${response.status}`);
   }
 

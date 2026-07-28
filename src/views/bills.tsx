@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { formatMoney } from "@/lib/format";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { useAppLocale } from "@/lib/i18n";
 import { extractBillItemsFromFile } from "@/lib/bill-ocr";
 
@@ -140,6 +141,13 @@ export function Bills() {
       } else {
         setUploadNotice("failed");
       }
+    } catch (error) {
+      setUploadNotice("failed");
+      toast({
+        title: t("bills.extractionFailed"),
+        description: getApiErrorMessage(error, t("bills.checkForm")),
+        variant: "destructive",
+      });
     } finally {
       setIsUploading(false);
     }
@@ -171,10 +179,10 @@ export function Bills() {
       });
       resetForm();
       setIsAddOpen(false);
-    } catch {
+    } catch (error) {
       toast({
         title: t("bills.unableToSaveBill"),
-        description: t("bills.checkForm"),
+        description: getApiErrorMessage(error, t("bills.checkForm")),
         variant: "destructive",
       });
     }
@@ -186,8 +194,8 @@ export function Bills() {
       await deleteBill.mutateAsync({ id: deleteTarget.id });
       await queryClient.invalidateQueries({ queryKey: getListBillsQueryKey() });
       setDeleteTarget(null);
-    } catch {
-      toast({ title: t("bills.unableToSaveBill"), variant: "destructive" });
+    } catch (error) {
+      toast({ title: t("bills.unableToSaveBill"), description: getApiErrorMessage(error), variant: "destructive" });
     }
   };
 
@@ -257,7 +265,7 @@ export function Bills() {
                 <FormField control={form.control} name="billDate" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("bills.billDate")}</FormLabel>
-                    <FormControl><Input type="date" {...field} /></FormControl>
+                    <FormControl><Input type="date" placeholder={t("bills.billDate")} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

@@ -16,6 +16,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { Separator } from "@/components/ui/separator";
 import { useAppLocale } from "@/lib/i18n";
 
@@ -23,7 +24,7 @@ const formSchema = z.object({
   email: z.string().email("Valid email is required"),
   shopName: z.string().min(2, "Shop name is required"),
   phone: z.string().optional(),
-  contactEmail: z.string().email("Valid email is required"),
+  contactEmail: z.string().email("Valid email is required").optional().or(z.literal("")),
   address: z.string().optional(),
   baseCurrency: z.string().min(1),
   timezone: z.string().min(1),
@@ -41,7 +42,7 @@ export function Settings() {
   const { user } = useAuth();
   const { t } = useAppLocale();
   const [saving, setSaving] = useState(false);
-  
+
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useGetSettings();
   const { data: profile, isLoading: profileLoading, error: profileError } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
   const updateMutation = useUpdateSettings();
@@ -113,19 +114,21 @@ export function Settings() {
       }
 
       promises.push(
-        updateMutation.mutateAsync({ data: {
-          shopName: values.shopName,
-          contactEmail: values.contactEmail,
-          address: values.address,
-          baseCurrency: values.baseCurrency,
-          timezone: values.timezone,
-          vatRate: values.vatRate,
-          nisabThreshold: values.nisabThreshold,
-          islamicModeEnabled: values.islamicModeEnabled,
-          emailNotifications: values.emailNotifications,
-          pushNotifications: values.pushNotifications,
-          smsAlerts: values.smsAlerts,
-        } }),
+        updateMutation.mutateAsync({
+          data: {
+            shopName: values.shopName,
+            contactEmail: values.contactEmail,
+            address: values.address,
+            baseCurrency: values.baseCurrency,
+            timezone: values.timezone,
+            vatRate: values.vatRate,
+            nisabThreshold: values.nisabThreshold,
+            islamicModeEnabled: values.islamicModeEnabled,
+            emailNotifications: values.emailNotifications,
+            pushNotifications: values.pushNotifications,
+            smsAlerts: values.smsAlerts,
+          }
+        }),
       );
 
       await Promise.all(promises);
@@ -139,10 +142,10 @@ export function Settings() {
       queryClient.invalidateQueries({ queryKey: ["businessProfile"] });
       queryClient.invalidateQueries({ queryKey: ["businessProfile", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-    } catch {
+    } catch (error) {
       toast({
         title: t("settings.updateFailed"),
-        description: t("settings.updateFailedDescription"),
+        description: getApiErrorMessage(error, t("settings.updateFailedDescription")),
         variant: "destructive",
       });
     } finally {
@@ -277,12 +280,12 @@ export function Settings() {
                         </FormDescription>
                       </div>
                       <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="data-[state=checked]:bg-primary"
-                            disabled={isLoading}
-                          />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="data-[state=checked]:bg-primary"
+                          disabled={isLoading}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -298,7 +301,7 @@ export function Settings() {
                           <FormLabel>{t("settings.nisabThreshold")}</FormLabel>
                           <FormDescription>{t("settings.nisabThresholdDescription")}</FormDescription>
                           <FormControl>
-                            <Input type="number" {...field} disabled={isLoading} />
+                            <Input type="number" placeholder="2200" {...field} disabled={isLoading} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -380,7 +383,7 @@ export function Settings() {
                     <FormItem>
                       <FormLabel>{t("settings.vatRate")}</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} disabled={isLoading} />
+                        <Input type="number" placeholder="15" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

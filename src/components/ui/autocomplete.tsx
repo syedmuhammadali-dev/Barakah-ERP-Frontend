@@ -121,6 +121,7 @@ export function Autocomplete({
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
           onKeyDown={onKeyDown}
         />
         <button

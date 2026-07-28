@@ -23,6 +23,7 @@ export function BusinessTypeExtraFields({ fields, values, onChange }: BusinessTy
           <Input
             id={`extra-field-${field.key}`}
             type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+            placeholder={`Enter ${field.label}`}
             value={values[field.key] ?? ""}
             onChange={(e) => onChange(field.key, e.target.value)}
           />

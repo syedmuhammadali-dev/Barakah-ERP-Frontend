@@ -30,6 +30,7 @@ import { AppLink } from "@/components/route-transition";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { formatMoney } from "@/lib/format";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -210,7 +211,7 @@ export function Inventory() {
       setSelectedProduct(null);
     } catch (error) {
       console.error("Failed to update product:", error);
-      toast({ title: "Unable to update product", description: "Please review the fields and try again.", variant: "destructive" });
+      toast({ title: "Unable to update product", description: getApiErrorMessage(error, "Please review the fields and try again."), variant: "destructive" });
     }
   });
 
@@ -231,7 +232,7 @@ export function Inventory() {
       setSelectedProduct(null);
     } catch (error) {
       console.error("Failed to adjust stock:", error);
-      toast({ title: "Unable to adjust stock", description: "Please try again.", variant: "destructive" });
+      toast({ title: "Unable to adjust stock", description: getApiErrorMessage(error, "Please try again."), variant: "destructive" });
     }
   };
 
@@ -248,7 +249,7 @@ export function Inventory() {
       setDeleteTarget(null);
     } catch (error) {
       console.error("Failed to delete product:", error);
-      toast({ title: "Unable to delete product", description: "The item could not be removed.", variant: "destructive" });
+      toast({ title: "Unable to delete product", description: getApiErrorMessage(error, "The item could not be removed."), variant: "destructive" });
     }
   };
 
@@ -278,7 +279,7 @@ export function Inventory() {
       setIsAddOpen(false);
     } catch (error) {
       console.error("Failed to create product:", error);
-      toast({ title: "Unable to save product", description: "Please review the fields and try again.", variant: "destructive" });
+      toast({ title: "Unable to save product", description: getApiErrorMessage(error, "Please review the fields and try again."), variant: "destructive" });
     }
   });
 
@@ -545,6 +546,7 @@ export function Inventory() {
               <Input
                 id="adjust-delta"
                 type="number"
+                placeholder={t("inventory.adjustmentLabel")}
                 value={adjustDelta}
                 onChange={(e) => setAdjustDelta(Number(e.target.value))}
               />

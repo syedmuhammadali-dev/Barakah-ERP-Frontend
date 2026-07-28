@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { formatMoney } from "@/lib/format";
 import { apiRequest } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { useAppLocale } from "@/lib/i18n";
 
 const formSchema = z.object({
@@ -107,44 +108,52 @@ export function Salesmen() {
   };
 
   const saveSalesman = async (values: SalesmanFormValues) => {
-    if (selectedSalesman) {
-      await apiRequest(`/api/salesmen/${selectedSalesman.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          name: values.name,
-          initials: values.initials,
-          email: values.email || null,
-          profileImageUrl: values.profileImageUrl || null,
-          target: values.target,
-          commissionRate: values.commissionRate,
-        }),
-      });
+    try {
+      if (selectedSalesman) {
+        await apiRequest(`/api/salesmen/${selectedSalesman.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: values.name,
+            initials: values.initials,
+            email: values.email || null,
+            profileImageUrl: values.profileImageUrl || null,
+            target: values.target,
+            commissionRate: values.commissionRate,
+          }),
+        });
+        toast({
+          title: "Salesman updated",
+          description: `${values.name} has been updated successfully.`,
+        });
+      } else {
+        await createMutation.mutateAsync({
+          data: {
+            name: values.name,
+            initials: values.initials,
+            email: values.email || undefined,
+            profileImageUrl: values.profileImageUrl || undefined,
+            target: values.target,
+            commissionRate: values.commissionRate,
+          },
+        });
+        toast({
+          title: "Salesman added",
+          description: `${values.name} has been added to the team.`,
+        });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: getListSalesmenQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getGetDashboardOverviewQueryKey() });
+      setIsFormOpen(false);
+      setSelectedSalesmanId(null);
+      form.reset();
+    } catch (error) {
       toast({
-        title: "Salesman updated",
-        description: `${values.name} has been updated successfully.`,
-      });
-    } else {
-      await createMutation.mutateAsync({
-        data: {
-          name: values.name,
-          initials: values.initials,
-          email: values.email || undefined,
-          profileImageUrl: values.profileImageUrl || undefined,
-          target: values.target,
-          commissionRate: values.commissionRate,
-        },
-      });
-      toast({
-        title: "Salesman added",
-        description: `${values.name} has been added to the team.`,
+        title: "Unable to save salesman",
+        description: getApiErrorMessage(error, "Please check the details and try again."),
+        variant: "destructive",
       });
     }
-
-    await queryClient.invalidateQueries({ queryKey: getListSalesmenQueryKey() });
-    await queryClient.invalidateQueries({ queryKey: getGetDashboardOverviewQueryKey() });
-    setIsFormOpen(false);
-    setSelectedSalesmanId(null);
-    form.reset();
   };
 
   const handleDeleteSalesman = async () => {
@@ -152,14 +161,22 @@ export function Salesmen() {
       return;
     }
 
-    await apiRequest(`/api/salesmen/${deleteTarget.id}`, { method: "DELETE" });
-    await queryClient.invalidateQueries({ queryKey: getListSalesmenQueryKey() });
-    await queryClient.invalidateQueries({ queryKey: getGetDashboardOverviewQueryKey() });
-    toast({
-      title: "Salesman removed",
-      description: `${deleteTarget.name} has been deleted.`,
-    });
-    setDeleteTarget(null);
+    try {
+      await apiRequest(`/api/salesmen/${deleteTarget.id}`, { method: "DELETE" });
+      await queryClient.invalidateQueries({ queryKey: getListSalesmenQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getGetDashboardOverviewQueryKey() });
+      toast({
+        title: "Salesman removed",
+        description: `${deleteTarget.name} has been deleted.`,
+      });
+      setDeleteTarget(null);
+    } catch (error) {
+      toast({
+        title: "Unable to remove salesman",
+        description: getApiErrorMessage(error),
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -249,7 +266,7 @@ export function Salesmen() {
                     <FormItem>
                       <FormLabel>{t("salesmen.monthlyTargetPkr")}</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" placeholder="10000" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -262,7 +279,7 @@ export function Salesmen() {
                     <FormItem>
                       <FormLabel>{t("salesmen.commissionPercent")}</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" {...field} />
+                        <Input type="number" step="0.1" placeholder="5" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

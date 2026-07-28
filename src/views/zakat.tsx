@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { formatMoney } from "@/lib/format";
 import { useAppLocale } from "@/lib/i18n";
 
@@ -29,10 +30,10 @@ export function Zakat() {
   const { t } = useAppLocale();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   const { data: status, isLoading: statusLoading, error: statusError } = useGetZakatStatus();
   const { data: records, isLoading: recordsLoading, error: recordsError } = useListZakatRecords();
-  
+
   const calculateMutation = useCalculateZakat();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -68,7 +69,7 @@ export function Zakat() {
       onError: (error) => {
         toast({
           title: t("zakat.calculationFailed"),
-          description: t("zakat.calculationError"),
+          description: getApiErrorMessage(error, t("zakat.calculationError")),
           variant: "destructive",
         });
       }
@@ -87,7 +88,7 @@ export function Zakat() {
           <Card className="bg-primary/5 border-primary/20 overflow-hidden relative">
             <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
               <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M100 0L122.451 77.5486L200 100L122.451 122.451L100 200L77.5486 122.451L0 100L77.5486 77.5486L100 0Z" fill="currentColor"/>
+                <path d="M100 0L122.451 77.5486L200 100L122.451 122.451L100 200L77.5486 122.451L0 100L77.5486 77.5486L100 0Z" fill="currentColor" />
               </svg>
             </div>
             <CardContent className="pt-8">
@@ -109,7 +110,7 @@ export function Zakat() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="bg-card p-4 rounded-xl border border-border/50 shadow-sm min-w-[200px]">
                   <p className="text-xs text-muted-foreground mb-1">{t("zakat.nisabThreshold")}</p>
                   <p className="font-bold text-lg mb-3">{formatMoney(status?.nisabThreshold)}</p>
@@ -152,12 +153,12 @@ export function Zakat() {
                           <TableCell className="text-right">{formatMoney(netAssets)}</TableCell>
                           <TableCell className="text-right font-bold text-primary">{formatMoney(record.calculatedZakat)}</TableCell>
                           <TableCell>
-                            <Badge 
-                              variant="outline" 
+                            <Badge
+                              variant="outline"
                               className={
-                                record.status === 'paid' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 
-                                record.status === 'overdue' ? 'bg-destructive/10 text-destructive border-destructive/20' : 
-                                'bg-secondary/20 text-secondary-foreground border-secondary/30'
+                                record.status === 'paid' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                  record.status === 'overdue' ? 'bg-destructive/10 text-destructive border-destructive/20' :
+                                    'bg-secondary/20 text-secondary-foreground border-secondary/30'
                               }
                             >
                               {record.status === 'paid' ? t("zakat.paid") : record.status === 'overdue' ? t("zakat.overdue") : record.status.toUpperCase()}
@@ -166,14 +167,14 @@ export function Zakat() {
                         </TableRow>
                       );
                     })}
-                      {(records ?? []).length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                            {recordsError ? t("zakat.recordsUnavailable") : t("zakat.noRecords")}
-                          </TableCell>
-                        </TableRow>
-                      ) : null}
-                    </TableBody>
+                    {(records ?? []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                          {recordsError ? t("zakat.recordsUnavailable") : t("zakat.noRecords")}
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </TableBody>
                 </Table>
               )}
             </CardContent>
@@ -198,7 +199,7 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.inventoryValuePkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} className="bg-muted/50 font-mono text-right" />
+                          <Input type="number" placeholder="0" {...field} className="bg-muted/50 font-mono text-right" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -211,7 +212,7 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.cashOnHandPkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} className="bg-muted/50 font-mono text-right" />
+                          <Input type="number" placeholder="0" {...field} className="bg-muted/50 font-mono text-right" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -224,23 +225,23 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.deductibleDebtsPkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" {...field} className="bg-muted/50 font-mono text-right text-destructive" />
+                          <Input type="number" placeholder="0" {...field} className="bg-muted/50 font-mono text-right text-destructive" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="pt-4 border-t border-border mt-6">
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-sm font-medium">{t("zakat.netZakatableAssets")}</span>
-                        <span className="font-mono text-sm">
+                      <span className="font-mono text-sm">
                         {formatMoney(form.watch("inventoryValue") + form.watch("cashOnHand") - form.watch("debts"))}
                       </span>
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full font-bold h-12" 
+                    <Button
+                      type="submit"
+                      className="w-full font-bold h-12"
                       disabled={calculateMutation.isPending}
                     >
                       {calculateMutation.isPending ? t("zakat.calculating") : t("zakat.calculateRecord")}

@@ -53,6 +53,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { useAppLocale } from "@/lib/i18n";
 import { generateBillPdf } from "@/lib/bill-pdf";
@@ -76,7 +77,7 @@ const saleItemSchema = z.object({
 });
 
 const saleFormSchema = z.object({
-  customerName: z.string().min(2, "Customer name is required"),
+  customerName: z.string().optional().default(""),
   salesmanId: z.string().optional(),
   paymentMethod: z.enum(PAYMENT_METHODS),
   discount: z.coerce.number().min(0).default(0),
@@ -200,7 +201,7 @@ export function Sales() {
     try {
       await createSale.mutateAsync({
         data: {
-          customerName: values.customerName,
+          customerName: values.customerName?.trim() || "Walk-in Customer",
           salesmanId:
             values.salesmanId && values.salesmanId !== "none"
               ? Number(values.salesmanId)
@@ -219,7 +220,7 @@ export function Sales() {
       await queryClient.invalidateQueries({ queryKey: getGetSalesSummaryQueryKey() });
       toast({
         title: t("sales.saleRecorded"),
-        description: t("sales.saleSaved").replace("{name}", values.customerName),
+        description: t("sales.saleSaved").replace("{name}", values.customerName?.trim() || "Walk-in Customer"),
       });
       form.reset({
         customerName: "",
@@ -230,10 +231,10 @@ export function Sales() {
       });
       setRowProductSearch({});
       setIsAddOpen(false);
-    } catch {
+    } catch (error) {
       toast({
         title: t("sales.unableToSaveSale"),
-        description: t("sales.checkForm"),
+        description: getApiErrorMessage(error, t("sales.checkForm")),
         variant: "destructive",
       });
     }
@@ -291,11 +292,11 @@ export function Sales() {
       paymentMethodLabel: paymentMethodLabel(sale.paymentMethod),
       items: (sale.items && sale.items.length > 0)
         ? sale.items.map((item) => ({
-            productName: item.productName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            lineTotal: item.lineTotal,
-          }))
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          lineTotal: item.lineTotal,
+        }))
         : [{ productName: sale.productName ?? t("sales.na"), quantity: 1, unitPrice: sale.total }],
       discount: sale.discount,
       total: sale.total,
@@ -520,7 +521,7 @@ export function Sales() {
                         <FormItem>
                           <FormLabel>{t("sales.discount")}</FormLabel>
                           <FormControl>
-                            <Input type="number" min="0" step="0.01" {...field} />
+                            <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

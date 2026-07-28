@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function Suppliers() {
@@ -131,10 +132,10 @@ export function Suppliers() {
       });
       form.reset();
       setIsAddOpen(false);
-    } catch {
+    } catch (error) {
       toast({
         title: t("suppliers.unableToSaveSupplier"),
-        description: t("suppliers.verifyFields"),
+        description: getApiErrorMessage(error, t("suppliers.verifyFields")),
         variant: "destructive",
       });
     }
@@ -161,10 +162,10 @@ export function Suppliers() {
       });
       setIsEditOpen(false);
       setSelectedSupplier(null);
-    } catch {
+    } catch (error) {
       toast({
         title: t("suppliers.unableToUpdateSupplier"),
-        description: t("suppliers.checkDetails"),
+        description: getApiErrorMessage(error, t("suppliers.checkDetails")),
         variant: "destructive",
       });
     }
@@ -188,10 +189,10 @@ export function Suppliers() {
       setIsReturnOpen(false);
       setSelectedSupplier(null);
       returnForm.reset();
-    } catch {
+    } catch (error) {
       toast({
         title: t("suppliers.unableToLogReturn"),
-        description: t("suppliers.reviewForm"),
+        description: getApiErrorMessage(error, t("suppliers.reviewForm")),
         variant: "destructive",
       });
     }
@@ -211,10 +212,10 @@ export function Suppliers() {
         description: t("suppliers.supplierRemoved").replace("{name}", deleteTarget.name),
       });
       setDeleteTarget(null);
-    } catch {
+    } catch (error) {
       toast({
         title: t("suppliers.unableToDeleteSupplier"),
-        description: t("suppliers.couldNotRemove"),
+        description: getApiErrorMessage(error, t("suppliers.couldNotRemove")),
         variant: "destructive",
       });
     }
@@ -385,7 +386,7 @@ export function Suppliers() {
                     <FormItem>
                       <FormLabel>{t("suppliers.expectedAmountPkr")}</FormLabel>
                       <FormControl>
-                        <Input type="number" min="0" step="0.01" {...field} />
+                        <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -398,7 +399,7 @@ export function Suppliers() {
                     <FormItem>
                       <FormLabel>{t("suppliers.dueDate")}</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} value={field.value ?? ""} />
+                        <Input type="date" placeholder={t("suppliers.dueDate")} {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -587,15 +588,15 @@ export function Suppliers() {
 
         <TabsContent value="returns" className="mt-4">
           <Card>
-              <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">{t("suppliers.returnLedger")}</CardTitle>
-                  <CardDescription>{t("suppliers.returnLedgerDescription")}</CardDescription>
-                </div>
+            <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">{t("suppliers.returnLedger")}</CardTitle>
+                <CardDescription>{t("suppliers.returnLedgerDescription")}</CardDescription>
+              </div>
               <Button size="sm" variant="outline" className="h-9" onClick={() => setIsReturnOpen(true)}>
                 <Plus className="w-4 h-4 mr-1" /> {t("suppliers.logReturn")}
               </Button>
-              </CardHeader>
+            </CardHeader>
             <CardContent className="p-0">
               {returnsLoading ? (
                 <div className="p-6 space-y-4">
@@ -625,8 +626,8 @@ export function Suppliers() {
                             variant="outline"
                             className={
                               ret.status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                              ret.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                              'bg-destructive/10 text-destructive border-destructive/20'
+                                ret.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                                  'bg-destructive/10 text-destructive border-destructive/20'
                             }
                           >
                             {ret.status.toUpperCase()}
