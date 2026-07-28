@@ -34,6 +34,20 @@ describe("Autocomplete", () => {
     expect(input.value).toBe("Piston");
   });
 
+  it("reopens the suggestions when the input is clicked again after a selection", () => {
+    render(<Harness suggestions={items} />);
+    const input = screen.getByPlaceholderText("Search") as HTMLInputElement;
+    fireEvent.focus(input);
+    fireEvent.click(screen.getByText("Piston"));
+    expect(input.value).toBe("Piston");
+    // List closes after selecting, even though the input keeps focus.
+    expect(screen.queryByRole("button", { name: /piston/i })).not.toBeInTheDocument();
+
+    // Clicking the already-focused input (no blur happened) must reopen it.
+    fireEvent.click(input);
+    expect(screen.getByRole("button", { name: /piston/i })).toBeInTheDocument();
+  });
+
   it("allows free text that is not in the suggestion list", () => {
     render(<Harness suggestions={items} />);
     const input = screen.getByPlaceholderText("Search") as HTMLInputElement;
