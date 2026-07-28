@@ -111,7 +111,7 @@ export function Zakat() {
                   )}
                 </div>
 
-                <div className="bg-card p-4 rounded-xl border border-border/50 shadow-sm min-w-[200px]">
+                <div className="bg-card p-4 rounded-xl border border-border/50 shadow-sm min-w-50">
                   <p className="text-xs text-muted-foreground mb-1">{t("zakat.nisabThreshold")}</p>
                   <p className="font-bold text-lg mb-3">{formatMoney(status?.nisabThreshold)}</p>
                   <p className="text-xs text-muted-foreground mb-1">{t("zakat.lastCalculated")}</p>

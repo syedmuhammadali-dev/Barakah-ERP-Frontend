@@ -272,7 +272,7 @@ export function Suppliers() {
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[520px]">
+        <DialogContent className="sm:max-w-130">
           <DialogHeader>
             <DialogTitle>{t("suppliers.editSupplier")}</DialogTitle>
             <DialogDescription>
@@ -329,7 +329,7 @@ export function Suppliers() {
       </Dialog>
 
       <Dialog open={isReturnOpen} onOpenChange={setIsReturnOpen}>
-        <DialogContent className="sm:max-w-[520px]">
+        <DialogContent className="sm:max-w-130">
           <DialogHeader>
             <DialogTitle>{t("suppliers.logSupplierReturn")}</DialogTitle>
             <DialogDescription>
@@ -430,7 +430,7 @@ export function Suppliers() {
       </AlertDialog>
 
       <Tabs defaultValue="suppliers" className="w-full">
-        <TabsList className="grid w-[400px] grid-cols-2 bg-muted/50 p-1">
+        <TabsList className="grid w-100 grid-cols-2 bg-muted/50 p-1">
           <TabsTrigger value="suppliers" className="data-[state=active]:bg-background data-[state=active]:text-foreground">
             <Truck className="w-4 h-4 mr-2" /> {t("suppliers.suppliersList")}
           </TabsTrigger>
@@ -459,7 +459,7 @@ export function Suppliers() {
                       <Plus className="w-4 h-4 mr-1" /> {t("suppliers.addSupplier")}
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[520px]">
+                  <DialogContent className="sm:max-w-130">
                     <DialogHeader>
                       <DialogTitle>{t("suppliers.addNewSupplier")}</DialogTitle>
                       <DialogDescription>

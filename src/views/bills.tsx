@@ -212,7 +212,7 @@ export function Bills() {
               <Plus className="w-4 h-4 mr-2" /> {t("bills.addBill")}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-140 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("bills.addNewBill")}</DialogTitle>
               <DialogDescription>{t("bills.addBillDescription")}</DialogDescription>

@@ -336,7 +336,7 @@ export function Sales() {
                 <ShoppingCart className="w-4 h-4 mr-2" /> {t("sales.addSale")}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[520px]">
+            <DialogContent className="sm:max-w-130">
               <DialogHeader>
                 <DialogTitle>{t("sales.addNewSale")}</DialogTitle>
                 <DialogDescription>
@@ -662,7 +662,7 @@ export function Sales() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[150px] bg-muted/50 border-none">
+              <SelectTrigger className="w-full sm:w-37.5 bg-muted/50 border-none">
                 <SelectValue placeholder={t("sales.statusFilterPlaceholder")} />
               </SelectTrigger>
               <SelectContent>

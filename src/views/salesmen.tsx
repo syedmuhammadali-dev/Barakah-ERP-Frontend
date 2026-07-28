@@ -193,7 +193,7 @@ export function Salesmen() {
       </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle>{selectedSalesman ? t("salesmen.editSalesman") : t("salesmen.addNewSalesman")}</DialogTitle>
             <DialogDescription>
@@ -372,7 +372,7 @@ export function Salesmen() {
                 <TableRow>
                   <TableHead>Salesman</TableHead>
                   <TableHead className="text-right">{t("salesmen.monthlyTarget")}</TableHead>
-                  <TableHead className="w-[200px]">{t("salesmen.progress")}</TableHead>
+                  <TableHead className="w-50">{t("salesmen.progress")}</TableHead>
                   <TableHead className="text-right">{t("salesmen.commissionRate")}</TableHead>
                   <TableHead className="text-right">{t("salesmen.totalSales")}</TableHead>
                   <TableHead className="text-right">Actions</TableHead>

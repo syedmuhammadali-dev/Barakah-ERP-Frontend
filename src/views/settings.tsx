@@ -454,7 +454,7 @@ export function Settings() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="font-bold min-w-[150px]"
+                  className="font-bold min-w-37.5"
                   disabled={saving || isLoading}
                 >
                   {saving ? t("settings.saving") : t("settings.saveConfiguration")}
