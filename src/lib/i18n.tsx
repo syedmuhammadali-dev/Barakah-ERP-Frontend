@@ -21,6 +21,16 @@ const messages = {
       themeLight: "Light",
       themeDark: "Dark",
     },
+    assistant: {
+      title: "Barakah Assistant",
+      open: "Open assistant",
+      close: "Close assistant",
+      greeting:
+        "Ask me anything about your shop or where to find a feature in the app.",
+      placeholder: "Type your question...",
+      thinking: "Thinking...",
+      error: "The assistant is unavailable right now. Please try again.",
+    },
     nav: {
       dashboard: "Dashboard",
       inventory: "Inventory",
@@ -629,6 +639,16 @@ const messages = {
       back: "واپس",
       themeLight: "روشن",
       themeDark: "تاریک",
+    },
+    assistant: {
+      title: "برکہ اسسٹنٹ",
+      open: "اسسٹنٹ کھولیں",
+      close: "اسسٹنٹ بند کریں",
+      greeting:
+        "اپنی دکان کے بارے میں یا ایپ میں کوئی چیز کہاں ہے، مجھ سے پوچھیں۔",
+      placeholder: "اپنا سوال لکھیں...",
+      thinking: "سوچ رہا ہوں...",
+      error: "اسسٹنٹ ابھی دستیاب نہیں ہے۔ براہ کرم دوبارہ کوشش کریں۔",
     },
     nav: {
       dashboard: "ڈیش بورڈ",
