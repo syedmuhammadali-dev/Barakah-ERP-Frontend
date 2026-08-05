@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { useState } from "react";
 import { useGetSubscriptionStatus, useRequestPayment } from "@barakah/api-client-react";
@@ -125,9 +125,8 @@ export function Subscription() {
                   key={m.id}
                   type="button"
                   onClick={() => setSelectedMethod(m.id)}
-                  className={`p-4 rounded-xl border-2 font-semibold text-sm transition-all ${
-                    selectedMethod === m.id ? m.activeColor : `${m.color} hover:opacity-80`
-                  }`}
+                  className={`p-4 rounded-xl border-2 font-semibold text-sm transition-all ${selectedMethod === m.id ? m.activeColor : `${m.color} hover:opacity-80`
+                    }`}
                 >
                   {m.label}
                 </button>

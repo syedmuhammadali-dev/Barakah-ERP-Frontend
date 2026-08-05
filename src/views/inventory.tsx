@@ -110,7 +110,7 @@ export function Inventory() {
 
   type ProductFormValues = z.infer<typeof productFormSchema>;
 
-  const form = useForm<ProductFormValues>({
+  const form = useForm({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: "",
@@ -127,7 +127,7 @@ export function Inventory() {
     },
   });
 
-  const editForm = useForm<ProductFormValues>({
+  const editForm = useForm({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: "",
@@ -371,14 +371,14 @@ export function Inventory() {
                     <FormField control={form.control} name="salePrice" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("inventory.salePrice")}</FormLabel>
-                        <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} /></FormControl>
+                        <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} value={field.value as number} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="margin" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("inventory.marginPercent")}</FormLabel>
-                        <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} /></FormControl>
+                        <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} value={field.value as number} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -387,14 +387,14 @@ export function Inventory() {
                     <FormField control={form.control} name="stockLevel" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("inventory.stockLevel")}</FormLabel>
-                        <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} /></FormControl>
+                        <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} value={field.value as number} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="maxStock" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("inventory.maxStock")}</FormLabel>
-                        <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} /></FormControl>
+                        <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} value={field.value as number} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -455,7 +455,7 @@ export function Inventory() {
                 <FormField control={editForm.control} name="salePrice" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.salePrice")}</FormLabel>
-                    <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.salePricePlaceholder")} {...field} value={field.value as number} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -464,14 +464,14 @@ export function Inventory() {
                 <FormField control={editForm.control} name="margin" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.marginPercent")}</FormLabel>
-                    <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} value={field.value as number} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={editForm.control} name="stockLevel" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.stockLevel")}</FormLabel>
-                    <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" placeholder={t("inventory.stockLevelPlaceholder")} {...field} value={field.value as number} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -480,7 +480,7 @@ export function Inventory() {
                 <FormField control={editForm.control} name="maxStock" render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("inventory.maxStock")}</FormLabel>
-                    <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} /></FormControl>
+                    <FormControl><Input type="number" min="0" placeholder={t("inventory.maxStockPlaceholder")} {...field} value={field.value as number} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

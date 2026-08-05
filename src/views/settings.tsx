@@ -51,7 +51,7 @@ export function Settings() {
   const isLoading = settingsLoading || profileLoading;
   const error = settingsError || profileError;
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
@@ -301,7 +301,7 @@ export function Settings() {
                           <FormLabel>{t("settings.nisabThreshold")}</FormLabel>
                           <FormDescription>{t("settings.nisabThresholdDescription")}</FormDescription>
                           <FormControl>
-                            <Input type="number" placeholder="2200" {...field} disabled={isLoading} />
+                            <Input type="number" placeholder="2200" {...field} value={field.value as number} disabled={isLoading} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -383,7 +383,7 @@ export function Settings() {
                     <FormItem>
                       <FormLabel>{t("settings.vatRate")}</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="15" {...field} disabled={isLoading} />
+                        <Input type="number" placeholder="15" {...field} value={field.value as number} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

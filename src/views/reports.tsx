@@ -148,14 +148,14 @@ export function Reports() {
                         <AreaChart data={report?.revenueByWeek ?? []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                           <defs>
                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                           <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `PKR ${value}`} />
-                          <RechartsTooltip 
+                          <RechartsTooltip
                             contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}
                             itemStyle={{ color: 'hsl(var(--primary))' }}
                           />
@@ -198,9 +198,9 @@ export function Reports() {
                               <Badge variant="outline" className={invoice.status === 'settled' ? 'text-green-500 border-green-500/20 bg-green-500/10' : 'text-muted-foreground'}>
                                 {invoice.status === 'settled' ? t("sales.settled")
                                   : invoice.status === 'pending' ? t("sales.pending")
-                                  : invoice.status === 'credit' ? t("sales.credit")
-                                  : invoice.status === 'refunded' ? t("sales.refunded")
-                                  : invoice.status}
+                                    : invoice.status === 'credit' ? t("sales.credit")
+                                      : invoice.status === 'refunded' ? t("sales.refunded")
+                                        : invoice.status}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right font-medium">{formatMoney(invoice.grossSales)}</TableCell>

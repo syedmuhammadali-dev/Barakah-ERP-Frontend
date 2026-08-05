@@ -53,7 +53,7 @@ export function Suppliers() {
 
   type SupplierFormValues = z.infer<typeof supplierSchema>;
 
-  const form = useForm<SupplierFormValues>({
+  const form = useForm({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
@@ -62,7 +62,7 @@ export function Suppliers() {
     },
   });
 
-  const editForm = useForm<SupplierFormValues>({
+  const editForm = useForm({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
@@ -80,7 +80,7 @@ export function Suppliers() {
 
   type ReturnFormValues = z.infer<typeof returnSchema>;
 
-  const returnForm = useForm<ReturnFormValues>({
+  const returnForm = useForm({
     resolver: zodResolver(returnSchema),
     defaultValues: {
       supplierId: 0,
@@ -386,7 +386,7 @@ export function Suppliers() {
                     <FormItem>
                       <FormLabel>{t("suppliers.expectedAmountPkr")}</FormLabel>
                       <FormControl>
-                        <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} />
+                        <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} value={field.value as number} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

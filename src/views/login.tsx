@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@barakah/auth-web";
@@ -133,15 +133,15 @@ export function Login() {
               <div className="space-y-2">
                 <Label htmlFor="password">{t("auth.password")}</Label>
                 <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Enter password"
-                  className="pr-12"
-                />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Enter password"
+                    className="pr-12"
+                  />
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"

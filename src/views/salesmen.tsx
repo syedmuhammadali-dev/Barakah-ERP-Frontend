@@ -58,7 +58,7 @@ export function Salesmen() {
       salesman.initials.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const form = useForm<SalesmanFormValues>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -266,7 +266,7 @@ export function Salesmen() {
                     <FormItem>
                       <FormLabel>{t("salesmen.monthlyTargetPkr")}</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="10000" {...field} />
+                        <Input type="number" placeholder="10000" {...field} value={field.value as number} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -279,7 +279,7 @@ export function Salesmen() {
                     <FormItem>
                       <FormLabel>{t("salesmen.commissionPercent")}</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.1" placeholder="5" {...field} />
+                        <Input type="number" step="0.1" placeholder="5" {...field} value={field.value as number} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

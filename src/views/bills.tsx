@@ -91,7 +91,7 @@ export function Bills() {
     ).slice(0, 10);
   };
 
-  const form = useForm<BillFormValues>({
+  const form = useForm({
     resolver: zodResolver(billFormSchema),
     defaultValues: {
       billNumber: "",
@@ -327,7 +327,7 @@ export function Bills() {
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <Input type="number" min="0" step="1" placeholder={t("sales.itemQuantity")} {...field} />
+                                <Input type="number" min="0" step="1" placeholder={t("sales.itemQuantity")} {...field} value={field.value as number} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -339,7 +339,7 @@ export function Bills() {
                           render={({ field }) => (
                             <FormItem>
                               <FormControl>
-                                <Input type="number" min="0" step="0.01" placeholder={t("sales.itemUnitPrice")} {...field} />
+                                <Input type="number" min="0" step="0.01" placeholder={t("sales.itemUnitPrice")} {...field} value={field.value as number} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

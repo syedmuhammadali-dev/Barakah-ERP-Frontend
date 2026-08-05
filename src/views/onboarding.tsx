@@ -171,13 +171,12 @@ export function Onboarding() {
           {STEPS.map((s, i) => (
             <div key={s.id} className="flex items-center gap-2">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                  step > s.id
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${step > s.id
                     ? "bg-primary text-primary-foreground"
                     : step === s.id
                       ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
                       : "bg-muted text-muted-foreground"
-                }`}
+                  }`}
               >
                 {step > s.id ? <Check className="w-4 h-4" /> : s.id}
               </div>
@@ -243,13 +242,12 @@ export function Onboarding() {
                           setForm((f) => ({ ...f, businessType: id }));
                           clearError("businessType");
                         }}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-medium ${
-                          form.businessType === id
+                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-medium ${form.businessType === id
                             ? "border-primary bg-primary/10 text-primary"
                             : errors.businessType
                               ? "border-destructive hover:border-destructive/50"
                               : "border-border hover:border-primary/50 text-muted-foreground hover:text-foreground"
-                        }`}
+                          }`}
                       >
                         <Icon className="w-6 h-6" />
                         <span className="text-center leading-tight">

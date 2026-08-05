@@ -36,7 +36,7 @@ export function Zakat() {
 
   const calculateMutation = useCalculateZakat();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       inventoryValue: 0,
@@ -199,7 +199,7 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.inventoryValuePkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0" {...field} className="bg-muted/50 font-mono text-right" />
+                          <Input type="number" placeholder="0" {...field} value={field.value as number} className="bg-muted/50 font-mono text-right" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -212,7 +212,7 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.cashOnHandPkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0" {...field} className="bg-muted/50 font-mono text-right" />
+                          <Input type="number" placeholder="0" {...field} value={field.value as number} className="bg-muted/50 font-mono text-right" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -225,7 +225,7 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.deductibleDebtsPkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0" {...field} className="bg-muted/50 font-mono text-right text-destructive" />
+                          <Input type="number" placeholder="0" {...field} value={field.value as number} className="bg-muted/50 font-mono text-right text-destructive" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -236,7 +236,11 @@ export function Zakat() {
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-sm font-medium">{t("zakat.netZakatableAssets")}</span>
                       <span className="font-mono text-sm">
-                        {formatMoney(form.watch("inventoryValue") + form.watch("cashOnHand") - form.watch("debts"))}
+                        {formatMoney(
+                          (form.watch("inventoryValue") as number) +
+                            (form.watch("cashOnHand") as number) -
+                            (form.watch("debts") as number),
+                        )}
                       </span>
                     </div>
                     <Button
