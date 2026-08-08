@@ -13,6 +13,10 @@ if (!apiTarget) {
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The desktop app sets BUILD_STANDALONE=true to get a self-contained
+  // server bundle it can ship inside the installer. Left unset for the
+  // normal web deployment, so Vercel's build is completely unchanged.
+  ...(process.env.BUILD_STANDALONE === "true" ? { output: "standalone" } : {}),
   images: {
     unoptimized: true,
   },
