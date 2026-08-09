@@ -10,9 +10,9 @@ export function absoluteUrl(pathname: string) {
 }
 
 /**
- * Download link for the Windows desktop app installer. Placeholder until
- * a real Drive/GitHub Releases link is set — swap the value below (or set
- * NEXT_PUBLIC_DESKTOP_APP_URL as an env var) once one exists.
+ * Download link for the Windows desktop app installer (demo build on
+ * Google Drive). Override with NEXT_PUBLIC_DESKTOP_APP_URL if this ever
+ * moves to GitHub Releases or another host.
  */
 export const DESKTOP_APP_DOWNLOAD_URL =
-  process.env.NEXT_PUBLIC_DESKTOP_APP_URL ?? "https://example.com/barakah-desktop-app-demo";
+  process.env.NEXT_PUBLIC_DESKTOP_APP_URL ?? "https://drive.google.com/file/d/1q9mABzY20YPVl20DF57PbFXd2rm1rh9s/view?usp=sharing";
