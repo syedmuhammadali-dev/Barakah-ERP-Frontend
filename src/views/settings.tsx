@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone } from "lucide-react";
+import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone, Download } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { getApiErrorMessage } from "@/lib/api-error";
+import { exportAllDataToExcel } from "@/lib/export-data";
 import { Separator } from "@/components/ui/separator";
 import { useAppLocale } from "@/lib/i18n";
 
@@ -42,6 +43,23 @@ export function Settings() {
   const { user } = useAuth();
   const { t } = useAppLocale();
   const [saving, setSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      await exportAllDataToExcel();
+      toast({ title: t("settings.exportDataSuccess") });
+    } catch (error) {
+      toast({
+        title: t("settings.exportDataFailed"),
+        description: getApiErrorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useGetSettings();
   const { data: profile, isLoading: profileLoading, error: profileError } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
@@ -464,6 +482,29 @@ export function Settings() {
           </div>
         </form>
       </Form>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-1 space-y-2">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <Download className="w-5 h-5 text-primary" /> {t("settings.exportData")}
+          </h3>
+          <p className="text-sm text-muted-foreground">{t("settings.exportDataDescription")}</p>
+        </div>
+        <Card className="md:col-span-3">
+          <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-sm text-muted-foreground max-w-md">{t("settings.exportDataHint")}</p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleExportData}
+              disabled={isExporting}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isExporting ? t("settings.exporting") : t("settings.exportDataButton")}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
