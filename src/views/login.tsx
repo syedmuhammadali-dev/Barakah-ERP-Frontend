@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useAuth } from "@barakah/auth-web";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,12 +12,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { ShieldCheck, ArrowRight, Eye, EyeOff, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { AppLink, useRouteTransition } from "@/components/route-transition";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppLocale } from "@/lib/i18n";
+import { readWorkbookFile } from "@/lib/export-data";
 
 export function Login() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -28,7 +29,10 @@ export function Login() {
   const [password, setPassword] = useState("03182927392");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReadingFile, setIsReadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void router.prefetch("/dashboard");
@@ -38,6 +42,33 @@ export function Login() {
       router.replace("/dashboard");
     }
   }, [beginTransition, isAuthenticated, isLoading, router]);
+
+  // Only ever pre-fills the email field from an exported backup file — the
+  // file never contains a password, so this can't and doesn't skip login.
+  // A real password is still required to actually sign in.
+  const onUploadBackupFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setError(null);
+    setNotice(null);
+    setIsReadingFile(true);
+    try {
+      const parsed = await readWorkbookFile(file);
+      const foundEmail = parsed.User?.[0]?.email;
+      if (typeof foundEmail !== "string" || !foundEmail) {
+        throw new Error(t("auth.backupFileNoEmail"));
+      }
+      setEmail(foundEmail);
+      setPassword("");
+      setNotice(t("auth.backupFileFound").replace("{email}", foundEmail));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("auth.backupFileReadError"));
+    } finally {
+      setIsReadingFile(false);
+    }
+  };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -118,6 +149,30 @@ export function Login() {
                 {t("auth.backHome")}
               </AppLink>
             </div>
+            <div className="mb-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={onUploadBackupFile}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={isReadingFile}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {isReadingFile ? t("common.loading") : t("auth.uploadBackupFile")}
+              </Button>
+              {notice ? (
+                <p className="mt-2 text-sm text-primary">{notice}</p>
+              ) : null}
+            </div>
+
             <form className="space-y-5" onSubmit={onSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="email">{t("auth.email")}</Label>
