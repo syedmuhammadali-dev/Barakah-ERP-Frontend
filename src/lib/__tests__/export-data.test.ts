@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { buildWorkbook, readWorkbookFile, type ExportedData } from "../export-data";
+import { buildWorkbook, buildWorkbookFromSheets, readWorkbookFile, type ExportedData } from "../export-data";
 
 const sampleData: ExportedData = {
   exportedAt: "2026-01-01T00:00:00.000Z",
@@ -58,5 +58,19 @@ describe("export-data round trip", () => {
     // Empty tables still round-trip as a sheet — just with no data rows
     // (the "No data" placeholder becomes the sheet's lone header cell).
     expect(parsed.Sales).toEqual([]);
+  });
+
+  it("saves edits made in the data-viewer back into a file that reads the edit back", async () => {
+    // Simulates: upload a file, edit one cell in the browser, click
+    // "Save Updated File" — the downloaded file should reflect the edit.
+    const uploaded = { Products: [{ id: 1, name: "Widget", sku: "SKU1" }] };
+    const edited = { Products: [{ id: 1, name: "Widget PRO", sku: "SKU1" }] };
+
+    const workbook = buildWorkbookFromSheets(edited);
+    const file = workbookToFile(workbook, "products-updated.xlsx");
+    const parsed = await readWorkbookFile(file);
+
+    expect(parsed.Products).toEqual([{ id: 1, name: "Widget PRO", sku: "SKU1" }]);
+    expect(parsed.Products).not.toEqual(uploaded.Products);
   });
 });

@@ -35,6 +35,11 @@ const messages = {
       tables: "Tables",
       rowCount: "{count} rows",
       noRows: "This table has no rows.",
+      saveButton: "Save Updated File",
+      saveButtonDirty: "Save Updated File*",
+      saveSuccess: "Updated file downloaded",
+      unsavedBadge: "(unsaved edits)",
+      discardConfirm: "You have unsaved edits that haven't been downloaded. Discard them?",
     },
     assistant: {
       title: "Barakah Assistant",
@@ -685,6 +690,11 @@ const messages = {
       tables: "ٹیبلز",
       rowCount: "{count} قطاریں",
       noRows: "اس ٹیبل میں کوئی قطار نہیں ہے۔",
+      saveButton: "اپڈیٹڈ فائل محفوظ کریں",
+      saveButtonDirty: "اپڈیٹڈ فائل محفوظ کریں*",
+      saveSuccess: "اپڈیٹڈ فائل ڈاؤن لوڈ ہو گئی",
+      unsavedBadge: "(غیر محفوظ تبدیلیاں)",
+      discardConfirm: "آپ کی کچھ تبدیلیاں ابھی تک ڈاؤن لوڈ نہیں ہوئیں۔ کیا انہیں ختم کر دیں؟",
     },
     assistant: {
       title: "برکہ اسسٹنٹ",

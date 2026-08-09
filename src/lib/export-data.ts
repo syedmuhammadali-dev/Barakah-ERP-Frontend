@@ -84,3 +84,26 @@ export async function readWorkbookFile(file: File): Promise<Record<string, Recor
   }
   return result;
 }
+
+/**
+ * Turns an arbitrary { sheetName: rows[] } map (e.g. edits made in the
+ * data-viewer page) back into a downloadable .xlsx — the counterpart to
+ * readWorkbookFile(). Unlike buildWorkbook(), this isn't tied to the
+ * ExportedData shape, since an uploaded file can have any sheet names.
+ */
+export function buildWorkbookFromSheets(sheets: Record<string, Record<string, unknown>[]>): XLSX.WorkBook {
+  const workbook = XLSX.utils.book_new();
+  for (const [name, rows] of Object.entries(sheets)) {
+    const sheet = rows.length > 0 ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.aoa_to_sheet([["No data"]]);
+    XLSX.utils.book_append_sheet(workbook, sheet, name.slice(0, 31));
+  }
+  return workbook;
+}
+
+export function downloadSheetsAsExcel(
+  sheets: Record<string, Record<string, unknown>[]>,
+  filename: string,
+): void {
+  const workbook = buildWorkbookFromSheets(sheets);
+  XLSX.writeFile(workbook, filename);
+}
