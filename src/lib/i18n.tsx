@@ -615,6 +615,10 @@ const messages = {
       exporting: "Exporting...",
       exportDataSuccess: "Export downloaded",
       exportDataFailed: "Export failed",
+      desktopApp: "Desktop App",
+      desktopAppDescription: "Run Barakah fully offline on your own PC.",
+      desktopAppHint: "A Windows app with its own local, offline database — no internet needed after install. Your data stays on that PC unless you export/import it.",
+      getDesktopApp: "Get Desktop App",
     },
     subscription: {
       title: "Subscription",
@@ -1261,6 +1265,10 @@ const messages = {
       exporting: "ایکسپورٹ ہو رہا ہے...",
       exportDataSuccess: "ایکسپورٹ ڈاؤن لوڈ ہو گئی",
       exportDataFailed: "ایکسپورٹ ناکام",
+      desktopApp: "ڈیسک ٹاپ ایپ",
+      desktopAppDescription: "برکہ اپنے کمپیوٹر پر مکمل آف لائن چلائیں۔",
+      desktopAppHint: "ایک Windows ایپ جس کا اپنا مقامی، آف لائن ڈیٹا بیس ہے — انسٹال کے بعد انٹرنیٹ کی ضرورت نہیں۔ آپ کا ڈیٹا اسی کمپیوٹر پر رہتا ہے جب تک آپ اسے ایکسپورٹ/امپورٹ نہ کریں۔",
+      getDesktopApp: "ڈیسک ٹاپ ایپ حاصل کریں",
     },
     subscription: {
       title: "سبسکرپشن",

@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone, Download } from "lucide-react";
+import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone, Download, Monitor } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -18,6 +18,7 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { exportAllDataToExcel } from "@/lib/export-data";
+import { DESKTOP_APP_DOWNLOAD_URL } from "@/lib/site";
 import { Separator } from "@/components/ui/separator";
 import { useAppLocale } from "@/lib/i18n";
 
@@ -501,6 +502,26 @@ export function Settings() {
             >
               <Download className="w-4 h-4 mr-2" />
               {isExporting ? t("settings.exporting") : t("settings.exportDataButton")}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-1 space-y-2">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <Monitor className="w-5 h-5 text-primary" /> {t("settings.desktopApp")}
+          </h3>
+          <p className="text-sm text-muted-foreground">{t("settings.desktopAppDescription")}</p>
+        </div>
+        <Card className="md:col-span-3">
+          <CardContent className="pt-6 flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-sm text-muted-foreground max-w-md">{t("settings.desktopAppHint")}</p>
+            <Button type="button" variant="outline" asChild>
+              <a href={DESKTOP_APP_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
+                <Monitor className="w-4 h-4 mr-2" />
+                {t("settings.getDesktopApp")}
+              </a>
             </Button>
           </CardContent>
         </Card>
