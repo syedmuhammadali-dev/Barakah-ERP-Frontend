@@ -90,6 +90,8 @@ const messages = {
       backupFileFound: "Found account: {email} — enter your password to continue.",
       backupFileNoEmail: "Couldn't find an account email in that file.",
       backupFileReadError: "Couldn't read that file. Make sure it's a Barakah export.",
+      signInWithGoogle: "Sign in with Google",
+      orContinueWith: "or continue with",
     },
     landing: {
       login: "Log in",
@@ -745,6 +747,8 @@ const messages = {
       backupFileFound: "اکاؤنٹ مل گیا: {email} — جاری رکھنے کے لیے اپنا پاس ورڈ درج کریں۔",
       backupFileNoEmail: "اس فائل میں اکاؤنٹ کی ای میل نہیں ملی۔",
       backupFileReadError: "یہ فائل پڑھی نہیں جا سکی۔ یقینی بنائیں کہ یہ برکہ کی ایکسپورٹ کردہ فائل ہے۔",
+      signInWithGoogle: "گوگل سے سائن ان کریں",
+      orContinueWith: "یا جاری رکھیں",
     },
     landing: {
       login: "لاگ ان",

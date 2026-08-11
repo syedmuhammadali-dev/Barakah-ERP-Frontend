@@ -13,16 +13,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, ArrowRight, Eye, EyeOff, Upload } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppLink, useRouteTransition } from "@/components/route-transition";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppLocale } from "@/lib/i18n";
 import { readWorkbookFile } from "@/lib/export-data";
+import { GoogleIcon } from "@/components/google-icon";
+
+const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
+  google_unavailable: "Google sign-in is temporarily unavailable. Please try again or use email/password.",
+  google_failed: "Google sign-in didn't complete. Please try again.",
+};
 
 export function Login() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { beginTransition } = useRouteTransition();
   const { t } = useAppLocale();
   const [email, setEmail] = useState("local@barakah.dev");
@@ -42,6 +49,13 @@ export function Login() {
       router.replace("/dashboard");
     }
   }, [beginTransition, isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    const code = searchParams.get("error");
+    if (code) {
+      setError(GOOGLE_ERROR_MESSAGES[code] ?? "Sign-in failed. Please try again.");
+    }
+  }, [searchParams]);
 
   // Only ever pre-fills the email field from an exported backup file — the
   // file never contains a password, so this can't and doesn't skip login.
@@ -149,6 +163,21 @@ export function Login() {
                 {t("auth.backHome")}
               </AppLink>
             </div>
+            <div className="mb-4">
+              <Button type="button" variant="outline" className="w-full" asChild>
+                <a href="/api/auth/google">
+                  <GoogleIcon className="mr-2 h-4 w-4" />
+                  {t("auth.signInWithGoogle")}
+                </a>
+              </Button>
+            </div>
+
+            <div className="relative mb-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              {t("auth.orContinueWith")}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
             <div className="mb-4">
               <input
                 ref={fileInputRef}

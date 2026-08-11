@@ -18,6 +18,7 @@ import { useAppLocale } from "@/lib/i18n";
 import { AppLink, useRouteTransition } from "@/components/route-transition";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
+import { GoogleIcon } from "@/components/google-icon";
 
 export function Signup() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -118,6 +119,21 @@ export function Signup() {
             </AppLink>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+              <Button type="button" variant="outline" className="w-full" asChild>
+                <a href="/api/auth/google">
+                  <GoogleIcon className="mr-2 h-4 w-4" />
+                  {t("auth.signInWithGoogle")}
+                </a>
+              </Button>
+            </div>
+
+            <div className="relative mb-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              {t("auth.orContinueWith")}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
             <form className="space-y-5" onSubmit={onSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
