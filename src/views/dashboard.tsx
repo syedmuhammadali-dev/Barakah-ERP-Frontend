@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetDashboardOverview, useGetRevenueReport, useGetInventoryDistribution, useGetTopProducts, useListAuditLog, useListSales } from "@barakah/api-client-react";
+import { useGetBusinessProfile, useGetDashboardOverview, useGetRevenueReport, useGetInventoryDistribution, useGetTopProducts, useListAuditLog, useListSales } from "@barakah/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
@@ -10,8 +10,10 @@ import { format } from "date-fns";
 import { TrendingUp, Package, AlertTriangle, Calculator, CalendarClock } from "lucide-react";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { useAppLocale } from "@/lib/i18n";
+import { getBusinessTypeConfig } from "@/lib/business-types";
 
 export function Dashboard() {
+  const { data: businessProfile } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
   const { data: overview, isLoading: overviewLoading, error: overviewError } = useGetDashboardOverview();
   const { data: revenueReport, isLoading: revenueLoading, error: revenueError } = useGetRevenueReport({ period: "week" });
   const { data: distribution, isLoading: distributionLoading, error: distributionError } = useGetInventoryDistribution();
@@ -22,6 +24,7 @@ export function Dashboard() {
   const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
   const { t } = useAppLocale();
+  const businessType = getBusinessTypeConfig(businessProfile?.businessType);
 
   return (
     <div className="space-y-6">
@@ -32,6 +35,23 @@ export function Dashboard() {
           {format(new Date(), 'EEEE, MMMM d, yyyy')}
         </Badge>
       </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary">{t("dashboard.selectedBusiness")}</p>
+            <h2 className="mt-2 text-xl font-semibold">{businessProfile?.businessName || t("dashboard.businessNameFallback")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{businessType.label}</p>
+          </div>
+          <div className="flex max-w-xl flex-wrap gap-2 sm:justify-end">
+            {businessType.defaultCategories.slice(0, 6).map((category) => (
+              <span key={category} className="rounded-full border border-primary/20 bg-background px-3 py-1 text-xs text-muted-foreground">
+                {category}
+              </span>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>

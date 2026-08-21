@@ -24,6 +24,7 @@ import {
   Settings,
   CreditCard,
   Database,
+  NotebookPen,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@barakah/auth-web";
@@ -61,6 +62,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { name: t("nav.suppliers"), href: "/suppliers", icon: Truck },
     { name: t("nav.settings"), href: "/settings", icon: Settings },
     { name: t("nav.dataViewer"), href: "/data-viewer", icon: Database },
+    { name: t("nav.notes"), href: "/notes", icon: NotebookPen },
     { name: t("nav.subscription"), href: "/subscription", icon: CreditCard },
   ];
 

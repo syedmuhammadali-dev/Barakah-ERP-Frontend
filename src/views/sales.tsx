@@ -360,7 +360,7 @@ export function Sales() {
                   />
 
                   <div className="space-y-3">
-                    <FormLabel>{t("sales.productItem")}</FormLabel>
+                    <p className="text-sm font-medium leading-none">{t("sales.productItem")}</p>
                     {itemFields.map((itemField, index) => {
                       const query = rowProductSearch[index] ?? form.getValues(`items.${index}.productName`) ?? "";
                       const options = openProductRow === index ? getFilteredProducts(query) : [];
@@ -528,7 +528,7 @@ export function Sales() {
                       )}
                     />
                     <div>
-                      <FormLabel>{t("sales.totalPkr")}</FormLabel>
+                      <p className="text-sm font-medium leading-none">{t("sales.totalPkr")}</p>
                       <p className="text-lg font-bold mt-2">{formatMoney(computedTotal)}</p>
                     </div>
                   </div>
