@@ -60,10 +60,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { name: t("nav.zakat"), href: "/zakat", icon: Calculator },
     { name: t("nav.salesmen"), href: "/salesmen", icon: Users },
     { name: t("nav.suppliers"), href: "/suppliers", icon: Truck },
-    { name: t("nav.settings"), href: "/settings", icon: Settings },
     { name: t("nav.dataViewer"), href: "/data-viewer", icon: Database },
     { name: t("nav.notes"), href: "/notes", icon: NotebookPen },
     { name: t("nav.subscription"), href: "/subscription", icon: CreditCard },
+    { name: t("nav.settings"), href: "/settings", icon: Settings },
   ];
 
   useEffect(() => {

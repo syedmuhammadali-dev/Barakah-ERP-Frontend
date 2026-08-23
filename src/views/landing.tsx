@@ -128,7 +128,7 @@ export function Landing() {
                 asChild
                 data-testid="button-book-demo"
               >
-                <AppLink href="/subscription">{t("landing.bookDemo")}</AppLink>
+                <AppLink href="/login?demo=1">{t("landing.bookDemo")}</AppLink>
               </Button>
             </div>
           </motion.div>
@@ -271,70 +271,54 @@ export function Landing() {
             {t("landing.pricingSubtitle")}
           </p>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
-            <Card className="border-border">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-2">{t("landing.standardPlan")}</h3>
-                <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-4xl font-bold">PKR 299</span>
-                  <span className="text-muted-foreground">{t("landing.perMonth")}</span>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature1")}
-                  </li>
-                  <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature2")}
-                  </li>
-                  <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature3")}
-                  </li>
-                  <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.standardFeature4")}
-                  </li>
-                </ul>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  asChild
-                  data-testid="button-plan-standard"
-                >
-                  <AppLink href="/signup">{t("landing.getStarted")}</AppLink>
-                </Button>
-              </CardContent>
-            </Card>
-
+          <div className="max-w-md mx-auto text-left">
             <Card className="border-primary shadow-[0_0_30px_-10px_rgba(255,193,7,0.3)] relative">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
                 {t("landing.recommended")}
               </div>
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-2">{t("landing.enterprisePlan")}</h3>
+                <h3 className="text-2xl font-bold mb-2">{t("landing.singlePlanName")}</h3>
                 <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-4xl font-bold">PKR 799</span>
+                  <span className="text-4xl font-bold">PKR 5,000</span>
                   <span className="text-muted-foreground">{t("landing.perMonth")}</span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature1")}
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.singlePlanFeature1")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature2")}
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.singlePlanFeature2")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature3")}
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.singlePlanFeature3")}
                   </li>
                   <li className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.enterpriseFeature4")}
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.singlePlanFeature4")}
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.singlePlanFeature5")}
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-primary" /> {t("landing.singlePlanFeature6")}
                   </li>
                 </ul>
-                <Button
-                  className="w-full font-bold"
-                  asChild
-                  data-testid="button-plan-enterprise"
-                >
-                  <AppLink href="/subscription">{t("landing.bookDemo")}</AppLink>
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    className="w-full font-bold"
+                    asChild
+                    data-testid="button-plan-single"
+                  >
+                    <AppLink href="/signup">{t("landing.getStarted")}</AppLink>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    asChild
+                    data-testid="button-plan-book-demo"
+                  >
+                    <AppLink href="/login?demo=1">{t("landing.bookDemo")}</AppLink>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

@@ -32,8 +32,8 @@ export function Login() {
   const searchParams = useSearchParams();
   const { beginTransition } = useRouteTransition();
   const { t } = useAppLocale();
-  const [email, setEmail] = useState("local@barakah.dev");
-  const [password, setPassword] = useState("03182927392");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -56,6 +56,39 @@ export function Login() {
       setError(GOOGLE_ERROR_MESSAGES[code] ?? "Sign-in failed. Please try again.");
     }
   }, [searchParams]);
+
+  const demoAttempted = useRef(false);
+  useEffect(() => {
+    if (searchParams.get("demo") !== "1" || demoAttempted.current) return;
+    demoAttempted.current = true;
+    setEmail("local@barakah.dev");
+    setPassword("03182927392");
+    void (async () => {
+      setError(null);
+      setIsSubmitting(true);
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "local@barakah.dev",
+            password: "03182927392",
+          }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.error ?? "Login failed");
+        }
+        beginTransition();
+        router.replace("/dashboard");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Login failed");
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
+  }, [beginTransition, router, searchParams]);
 
   // Only ever pre-fills the email field from an exported backup file — the
   // file never contains a password, so this can't and doesn't skip login.
@@ -137,6 +170,12 @@ export function Login() {
             </p>
             <p className="font-mono text-sm">Email: local@barakah.dev</p>
             <p className="font-mono text-sm">Password: 03182927392</p>
+            <p className="text-xs text-amber-500 dark:text-amber-400 leading-relaxed">
+              This is a shared public testing/demo account so every visitor can
+              try the ERP. Do not enter your real business, customer, or
+              personal data here — anything you add is visible to other demo
+              users and may be reset at any time.
+            </p>
           </div>
         </div>
 

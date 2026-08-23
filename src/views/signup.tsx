@@ -25,11 +25,11 @@ export function Signup() {
   const router = useRouter();
   const { beginTransition } = useRouteTransition();
   const { t } = useAppLocale();
-  const [firstName, setFirstName] = useState("Barakah");
-  const [lastName, setLastName] = useState("Admin");
-  const [email, setEmail] = useState("admin@barakah.local");
-  const [password, setPassword] = useState("03182927392");
-  const [confirmPassword, setConfirmPassword] = useState("03182927392");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
