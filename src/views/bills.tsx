@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getListBillsQueryKey,
   useCreateBill,
@@ -59,6 +59,7 @@ const billFormSchema = z.object({
   supplierName: z.string().min(2, "Supplier name is required"),
   billDate: z.string().optional(),
   notes: z.string().optional(),
+  total: z.coerce.number().min(0).optional(),
   items: z.array(billItemSchema).min(1, "Add at least one item"),
 });
 
@@ -71,6 +72,7 @@ export function Bills() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [viewBillId, setViewBillId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadNotice, setUploadNotice] = useState<"success" | "failed" | null>(null);
@@ -79,6 +81,7 @@ export function Bills() {
   const [rowProductSearch, setRowProductSearch] = useState<Record<number, string>>({});
 
   const { data: bills, isLoading, error } = useListBills();
+  const viewBill = useMemo(() => bills?.find((b) => b.id === viewBillId) ?? null, [bills, viewBillId]);
   const { data: allProducts } = useListProducts();
   const createBill = useCreateBill();
   const deleteBill = useDeleteBill();
@@ -98,6 +101,7 @@ export function Bills() {
       supplierName: "",
       billDate: "",
       notes: "",
+      total: 0,
       items: [emptyItem],
     },
   });
@@ -107,17 +111,25 @@ export function Bills() {
     name: "items",
   });
 
+  const [isTotalManual, setIsTotalManual] = useState(false);
   const watchedItems = form.watch("items");
   const computedTotal = useMemo(
     () => (watchedItems ?? []).reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0),
     [watchedItems],
   );
 
+  useEffect(() => {
+    if (!isTotalManual) {
+      form.setValue("total", computedTotal);
+    }
+  }, [computedTotal, isTotalManual, form]);
+
   const resetForm = () => {
-    form.reset({ billNumber: "", supplierName: "", billDate: "", notes: "", items: [emptyItem] });
+    form.reset({ billNumber: "", supplierName: "", billDate: "", notes: "", total: 0, items: [emptyItem] });
     setRowProductSearch({});
     setSourceFileName(null);
     setUploadNotice(null);
+    setIsTotalManual(false);
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,6 +173,7 @@ export function Bills() {
           supplierName: values.supplierName,
           billDate: values.billDate ? new Date(values.billDate).toISOString() : undefined,
           notes: values.notes || undefined,
+          total: values.total,
           sourceFileName: sourceFileName ?? undefined,
           items: values.items.map((item) => ({
             productId: item.productId ? Number(item.productId) : undefined,
@@ -272,6 +285,12 @@ export function Bills() {
 
                 <div className="space-y-3">
                   <p className="text-sm font-medium leading-none">{t("sales.productItem")}</p>
+                  <div className="grid grid-cols-[1fr_70px_110px_auto] gap-2 px-0.5 text-xs text-muted-foreground">
+                    <span>{t("bills.productName")}</span>
+                    <span>{t("bills.quantity")}</span>
+                    <span>{t("bills.unitPrice")}</span>
+                    <span />
+                  </div>
                   {itemFields.map((itemField, index) => {
                     const query = rowProductSearch[index] ?? form.getValues(`items.${index}.productName`) ?? "";
                     const options = openProductRow === index ? getFilteredProducts(query) : [];
@@ -376,10 +395,28 @@ export function Bills() {
                   </FormItem>
                 )} />
 
-                <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-4 py-3">
-                  <span className="text-sm font-medium">{t("bills.total")}</span>
-                  <span className="text-lg font-bold">{formatMoney(computedTotal)}</span>
-                </div>
+                <FormField control={form.control} name="total" render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-4 py-3 gap-4">
+                      <FormLabel className="text-sm font-medium shrink-0">{t("bills.total")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="text-right text-lg font-bold h-9 max-w-40"
+                          {...field}
+                          value={field.value as number}
+                          onChange={(e) => {
+                            setIsTotalManual(true);
+                            field.onChange(e.target.valueAsNumber || 0);
+                          }}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )} />
 
                 <Button type="submit" className="w-full" disabled={createBill.isPending}>
                   {createBill.isPending ? t("bills.saving") : t("bills.saveBill")}
@@ -389,6 +426,60 @@ export function Bills() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <Dialog open={Boolean(viewBillId)} onOpenChange={(open) => !open && setViewBillId(null)}>
+        <DialogContent className="sm:max-w-140 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewBill?.billNumber}</DialogTitle>
+            <DialogDescription>
+              {viewBill ? `${viewBill.supplierName} — ${format(parseISO(viewBill.billDate), "MMM d, yyyy")}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {viewBill ? (
+            <div className="space-y-4">
+              {viewBill.sourceFileName ? (
+                <Badge variant="outline" className="text-xs gap-1 w-fit">
+                  <FileText className="w-3 h-3" /> {viewBill.sourceFileName}
+                </Badge>
+              ) : null}
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow>
+                    <TableHead>{t("bills.productName")}</TableHead>
+                    <TableHead className="text-right">{t("bills.quantity")}</TableHead>
+                    <TableHead className="text-right">{t("bills.unitPrice")}</TableHead>
+                    <TableHead className="text-right">{t("bills.total")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(viewBill.items ?? []).map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.productName}</TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">{formatMoney(item.unitPrice)}</TableCell>
+                      <TableCell className="text-right">{formatMoney(item.lineTotal)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {(viewBill.items ?? []).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                        {t("bills.noBills")}
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </TableBody>
+              </Table>
+              {viewBill.notes ? (
+                <p className="text-sm text-muted-foreground">{viewBill.notes}</p>
+              ) : null}
+              <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-4 py-3">
+                <span className="text-sm font-medium">{t("bills.total")}</span>
+                <span className="text-lg font-bold">{formatMoney(viewBill.total)}</span>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
@@ -428,7 +519,11 @@ export function Bills() {
               </TableHeader>
               <TableBody>
                 {(bills ?? []).map((bill) => (
-                  <TableRow key={bill.id} className="hover:bg-muted/20">
+                  <TableRow
+                    key={bill.id}
+                    className="hover:bg-muted/20 cursor-pointer"
+                    onClick={() => setViewBillId(bill.id)}
+                  >
                     <TableCell className="font-mono text-xs">{bill.billNumber}</TableCell>
                     <TableCell>{bill.supplierName}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">
@@ -449,7 +544,10 @@ export function Bills() {
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
-                        onClick={() => setDeleteTarget({ id: bill.id, name: bill.billNumber })}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget({ id: bill.id, name: bill.billNumber });
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

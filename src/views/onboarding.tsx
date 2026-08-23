@@ -514,7 +514,7 @@ export function Onboarding() {
                     After your 30-day free trial
                   </p>
                   <p className="text-2xl font-bold text-primary mt-1">
-                    PKR 10,000{" "}
+                    PKR 5,000{" "}
                     <span className="text-base font-normal text-muted-foreground">
                       / month
                     </span>

@@ -102,7 +102,7 @@ export function Subscription() {
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">
-              {status ? formatMoney(status.planPrice, status.planCurrency) : "PKR 10,000"}
+              {status ? formatMoney(status.planPrice, status.planCurrency) : "PKR 5,000"}
             </p>
             <p className="text-xs text-muted-foreground">{t("subscription.perMonth")}</p>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getGetSalesSummaryQueryKey,
   getListSalesQueryKey,
@@ -78,9 +78,11 @@ const saleItemSchema = z.object({
 
 const saleFormSchema = z.object({
   customerName: z.string().optional().default(""),
+  customerPhone: z.string().optional().default(""),
   salesmanId: z.string().optional(),
   paymentMethod: z.enum(PAYMENT_METHODS),
   discount: z.coerce.number().min(0).default(0),
+  total: z.coerce.number().min(0).optional(),
   items: z.array(saleItemSchema).min(1, "Add at least one item"),
 });
 
@@ -117,6 +119,7 @@ export function Sales() {
       [
         sale.invoiceId,
         sale.customerName,
+        sale.customerPhone ?? "",
         sale.salesmanName ?? "",
         sale.paymentMethod,
         sale.status,
@@ -142,9 +145,11 @@ export function Sales() {
     resolver: zodResolver(saleFormSchema),
     defaultValues: {
       customerName: "",
+      customerPhone: "",
       salesmanId: "none",
       paymentMethod: "cash",
       discount: 0,
+      total: 0,
       items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
     },
   });
@@ -154,6 +159,7 @@ export function Sales() {
     name: "items",
   });
 
+  const [isTotalManual, setIsTotalManual] = useState(false);
   const watchedItems = form.watch("items");
   const watchedDiscount = form.watch("discount");
   const computedTotal = useMemo(() => {
@@ -163,6 +169,12 @@ export function Sales() {
     );
     return Math.max(0, itemsTotal - (Number(watchedDiscount) || 0));
   }, [watchedItems, watchedDiscount]);
+
+  useEffect(() => {
+    if (!isTotalManual) {
+      form.setValue("total", computedTotal);
+    }
+  }, [computedTotal, isTotalManual, form]);
 
   const handleExportCsv = () => {
     const rows = [
@@ -202,12 +214,14 @@ export function Sales() {
       await createSale.mutateAsync({
         data: {
           customerName: values.customerName?.trim() || "Walk-in Customer",
+          customerPhone: values.customerPhone?.trim() || undefined,
           salesmanId:
             values.salesmanId && values.salesmanId !== "none"
               ? Number(values.salesmanId)
               : undefined,
           paymentMethod: values.paymentMethod,
           discount: values.discount,
+          total: values.total,
           items: values.items.map((item) => ({
             productId: item.productId ? Number(item.productId) : undefined,
             productName: item.productName,
@@ -224,12 +238,15 @@ export function Sales() {
       });
       form.reset({
         customerName: "",
+        customerPhone: "",
         salesmanId: "none",
         paymentMethod: "cash",
         discount: 0,
+        total: 0,
         items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
       });
       setRowProductSearch({});
+      setIsTotalManual(false);
       setIsAddOpen(false);
     } catch (error) {
       toast({
@@ -345,19 +362,34 @@ export function Sales() {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={onSubmit} className="space-y-4 pt-4">
-                  <FormField
-                    control={form.control}
-                    name="customerName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("sales.customerName")}</FormLabel>
-                        <FormControl>
-                          <Input placeholder={t("sales.customerNamePlaceholder")} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="customerName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("sales.customerName")}</FormLabel>
+                          <FormControl>
+                            <Input placeholder={t("sales.customerNamePlaceholder")} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="customerPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("sales.customerPhone")}</FormLabel>
+                          <FormControl>
+                            <Input placeholder={t("sales.customerPhonePlaceholder")} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="space-y-3">
                     <p className="text-sm font-medium leading-none">{t("sales.productItem")}</p>
@@ -527,10 +559,30 @@ export function Sales() {
                         </FormItem>
                       )}
                     />
-                    <div>
-                      <p className="text-sm font-medium leading-none">{t("sales.totalPkr")}</p>
-                      <p className="text-lg font-bold mt-2">{formatMoney(computedTotal)}</p>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="total"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("sales.totalPkr")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              className="font-bold"
+                              {...field}
+                              value={field.value as number}
+                              onChange={(e) => {
+                                setIsTotalManual(true);
+                                field.onChange(e.target.valueAsNumber || 0);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   <Button type="submit" className="w-full" disabled={createSale.isPending}>
@@ -705,7 +757,12 @@ export function Sales() {
                     <TableCell className="text-muted-foreground text-sm">
                       {format(parseISO(sale.saleDate), "MMM d, yyyy HH:mm")}
                     </TableCell>
-                    <TableCell>{sale.customerName}</TableCell>
+                    <TableCell>
+                      <div>{sale.customerName}</div>
+                      {sale.customerPhone ? (
+                        <div className="text-xs text-muted-foreground">{sale.customerPhone}</div>
+                      ) : null}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">

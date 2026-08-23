@@ -35,6 +35,10 @@ export function Suppliers() {
     id: number;
     name: string;
     contactEmail?: string | null;
+    phone?: string | null;
+    nicNumber?: string | null;
+    address?: string | null;
+    totalBalance?: number;
   } | null>(null);
   const createSupplier = useCreateSupplier();
   const createSupplierReturn = useCreateSupplierReturn();
@@ -49,6 +53,10 @@ export function Suppliers() {
     name: z.string().min(2, "Supplier name is required"),
     companyName: z.string().optional().or(z.literal("")),
     contactEmail: z.string().email("Invalid email").optional().or(z.literal("")),
+    phone: z.string().optional().or(z.literal("")),
+    nicNumber: z.string().optional().or(z.literal("")),
+    address: z.string().optional().or(z.literal("")),
+    totalBalance: z.coerce.number().min(0).optional(),
   }), []);
 
   type SupplierFormValues = z.infer<typeof supplierSchema>;
@@ -59,6 +67,10 @@ export function Suppliers() {
       name: "",
       companyName: "",
       contactEmail: "",
+      phone: "",
+      nicNumber: "",
+      address: "",
+      totalBalance: 0,
     },
   });
 
@@ -68,12 +80,17 @@ export function Suppliers() {
       name: "",
       companyName: "",
       contactEmail: "",
+      phone: "",
+      nicNumber: "",
+      address: "",
+      totalBalance: 0,
     },
   });
 
   const returnSchema = useMemo(() => z.object({
     supplierId: z.coerce.number().min(1, "Supplier is required"),
     productName: z.string().min(2, "Product name is required"),
+    quantity: z.coerce.number().positive("Quantity must be positive").default(1),
     amount: z.coerce.number().min(0, "Amount must be positive"),
     dueDate: z.string().optional().or(z.literal("")),
   }), []);
@@ -85,6 +102,7 @@ export function Suppliers() {
     defaultValues: {
       supplierId: 0,
       productName: "",
+      quantity: 1,
       amount: 0,
       dueDate: "",
     },
@@ -99,6 +117,10 @@ export function Suppliers() {
       name: selectedSupplier.name,
       companyName: (selectedSupplier as any).companyName ?? "",
       contactEmail: selectedSupplier.contactEmail ?? "",
+      phone: (selectedSupplier as any).phone ?? "",
+      nicNumber: (selectedSupplier as any).nicNumber ?? "",
+      address: (selectedSupplier as any).address ?? "",
+      totalBalance: (selectedSupplier as any).totalBalance ?? 0,
     });
   }, [editForm, isEditOpen, selectedSupplier]);
 
@@ -110,6 +132,7 @@ export function Suppliers() {
     returnForm.reset({
       supplierId: selectedSupplier.id,
       productName: "",
+      quantity: 1,
       amount: 0,
       dueDate: "",
     });
@@ -122,6 +145,10 @@ export function Suppliers() {
           name: values.name,
           companyName: values.companyName || undefined,
           contactEmail: values.contactEmail || undefined,
+          phone: values.phone || undefined,
+          nicNumber: values.nicNumber || undefined,
+          address: values.address || undefined,
+          totalBalance: values.totalBalance || undefined,
         },
       });
       await queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() });
@@ -153,6 +180,10 @@ export function Suppliers() {
           name: values.name,
           companyName: values.companyName || null,
           contactEmail: values.contactEmail || null,
+          phone: values.phone || null,
+          nicNumber: values.nicNumber || null,
+          address: values.address || null,
+          totalBalance: values.totalBalance,
         }),
       });
       await queryClient.invalidateQueries({ queryKey: getListSuppliersQueryKey() });
@@ -177,6 +208,7 @@ export function Suppliers() {
         data: {
           supplierId: values.supplierId,
           productName: values.productName,
+          quantity: values.quantity,
           amount: values.amount,
           dueDate: values.dueDate || null,
         },
@@ -320,6 +352,60 @@ export function Suppliers() {
                   </FormItem>
                 )}
               />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("suppliers.phoneOptional")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="03xx-xxxxxxx" {...field} value={field.value ?? ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="nicNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("suppliers.nicOptional")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="xxxxx-xxxxxxx-x" {...field} value={field.value ?? ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={editForm.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("suppliers.addressOptional")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Street, City" {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="totalBalance"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("suppliers.openingBalanceOptional")}</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} value={field.value as number} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button type="submit" className="w-full">
                 {t("suppliers.saveSupplier")}
               </Button>
@@ -365,19 +451,34 @@ export function Suppliers() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={returnForm.control}
-                name="productName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("suppliers.productName")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Returned product name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-[1fr_100px] gap-4">
+                <FormField
+                  control={returnForm.control}
+                  name="productName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("suppliers.productName")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Returned product name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={returnForm.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("suppliers.quantityReturned")}</FormLabel>
+                      <FormControl>
+                        <Input type="number" min="0" step="1" placeholder="1" {...field} value={field.value as number} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={returnForm.control}
@@ -507,6 +608,60 @@ export function Suppliers() {
                             </FormItem>
                           )}
                         />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t("suppliers.phoneOptional")}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="03xx-xxxxxxx" {...field} value={field.value ?? ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="nicNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t("suppliers.nicOptional")}</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="xxxxx-xxxxxxx-x" {...field} value={field.value ?? ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name="address"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t("suppliers.addressOptional")}</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Street, City" {...field} value={field.value ?? ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="totalBalance"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t("suppliers.openingBalanceOptional")}</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" step="0.01" placeholder="0.00" {...field} value={field.value as number} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         <Button type="submit" className="w-full" disabled={createSupplier.isPending}>
                           {createSupplier.isPending ? t("inventory.saving") : t("suppliers.saveSupplier")}
                         </Button>
@@ -609,6 +764,7 @@ export function Suppliers() {
                       <TableHead>{t("suppliers.dateLogged")}</TableHead>
                       <TableHead>{t("suppliers.supplier")}</TableHead>
                       <TableHead>{t("suppliers.productReturned")}</TableHead>
+                      <TableHead className="text-right">{t("suppliers.quantityReturned")}</TableHead>
                       <TableHead className="text-right">{t("suppliers.amountExpected")}</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>{t("suppliers.dueDate")}</TableHead>
@@ -620,6 +776,7 @@ export function Suppliers() {
                         <TableCell className="text-sm text-muted-foreground">{format(parseISO(ret.createdAt), 'MMM d, yyyy')}</TableCell>
                         <TableCell className="font-medium">{ret.supplierName}</TableCell>
                         <TableCell>{ret.productName}</TableCell>
+                        <TableCell className="text-right">{ret.quantity}</TableCell>
                         <TableCell className="text-right font-medium">{formatMoney(ret.amount)}</TableCell>
                         <TableCell>
                           <Badge
@@ -640,7 +797,7 @@ export function Suppliers() {
                     ))}
                     {(returns ?? []).length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           {returnsError ? t("suppliers.returnsUnavailable") : t("suppliers.noReturns")}
                         </TableCell>
                       </TableRow>

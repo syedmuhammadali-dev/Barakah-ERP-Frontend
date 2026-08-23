@@ -179,7 +179,10 @@ export interface Product {
   /** @nullable */
   brand?: string | null;
   salePrice: number;
-  margin: number;
+  /** @nullable */
+  margin?: number | null;
+  /** @nullable */
+  priceCode?: string | null;
   stockLevel: number;
   maxStock: number;
   status: ProductStatus;
@@ -202,7 +205,10 @@ export interface ProductInput {
   /** @nullable */
   brand?: string | null;
   salePrice: number;
-  margin: number;
+  /** @nullable */
+  margin?: number | null;
+  /** @nullable */
+  priceCode?: string | null;
   stockLevel: number;
   maxStock: number;
   isAmanat?: boolean;
@@ -221,6 +227,8 @@ export interface ProductUpdate {
   salePrice?: number | null;
   /** @nullable */
   margin?: number | null;
+  /** @nullable */
+  priceCode?: string | null;
   /** @nullable */
   stockLevel?: number | null;
   /** @nullable */
@@ -295,6 +303,8 @@ export interface Sale {
   customerId?: number | null;
   customerName: string;
   /** @nullable */
+  customerPhone?: string | null;
+  /** @nullable */
   salesmanId?: number | null;
   /** @nullable */
   salesmanName?: string | null;
@@ -328,6 +338,8 @@ export const SaleInputPaymentMethod = {
 
 export interface SaleInput {
   customerName: string;
+  /** @nullable */
+  customerPhone?: string | null;
   /** @nullable */
   customerId?: number | null;
   /** @nullable */
@@ -377,6 +389,14 @@ export interface Salesman {
   /** @nullable */
   email?: string | null;
   /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  nicNumber?: string | null;
+  /** @nullable */
+  fatherName?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
   profileImageUrl?: string | null;
   target: number;
   commissionRate: number;
@@ -390,6 +410,14 @@ export interface SalesmanInput {
   /** @nullable */
   email?: string | null;
   /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  nicNumber?: string | null;
+  /** @nullable */
+  fatherName?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
   profileImageUrl?: string | null;
   target: number;
   commissionRate: number;
@@ -402,6 +430,13 @@ export interface SupplierInput {
   companyName?: string | null;
   /** @nullable */
   contactEmail?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  nicNumber?: string | null;
+  /** @nullable */
+  address?: string | null;
+  totalBalance?: number;
 }
 
 export interface Supplier {
@@ -411,6 +446,12 @@ export interface Supplier {
   companyName?: string | null;
   /** @nullable */
   contactEmail?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  nicNumber?: string | null;
+  /** @nullable */
+  address?: string | null;
   totalBalance: number;
   createdAt: string;
 }
@@ -429,6 +470,7 @@ export interface SupplierReturn {
   supplierId: number;
   supplierName: string;
   productName: string;
+  quantity: number;
   amount: number;
   status: SupplierReturnStatus;
   /** @nullable */
@@ -439,6 +481,7 @@ export interface SupplierReturn {
 export interface SupplierReturnInput {
   supplierId: number;
   productName: string;
+  quantity?: number;
   amount: number;
   /** @nullable */
   dueDate?: string | null;
@@ -537,6 +580,8 @@ export interface ShopSettings {
   shopName: string;
   contactEmail: string;
   address: string;
+  /** @nullable */
+  websiteUrl?: string | null;
   baseCurrency: string;
   timezone: string;
   vatRate: number;
@@ -555,6 +600,8 @@ export interface ShopSettingsUpdate {
   contactEmail?: string | null;
   /** @nullable */
   address?: string | null;
+  /** @nullable */
+  websiteUrl?: string | null;
   /** @nullable */
   baseCurrency?: string | null;
   /** @nullable */
@@ -689,5 +736,6 @@ export interface BillInput {
   sourceFileName?: string | null;
   /** @nullable */
   notes?: string | null;
+  total?: number;
   items: BillItemInput[];
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Bot, Languages, LoaderCircle, Mic, Send, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
 const CHAT_STORAGE_KEY = "barakah-assistant-chat-v1";
 const LANGUAGE_STORAGE_KEY = "barakah-assistant-language-v1";
+const LAUNCHER_POSITION_KEY = "barakah-assistant-launcher-pos-v1";
 
 /**
  * Floating AI assistant. Sits bottom-right in English and bottom-left in
@@ -57,6 +59,74 @@ export function ChatAssistant() {
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const chatStorageKey = `${CHAT_STORAGE_KEY}:${user?.id ?? "guest"}`;
   const languageStorageKey = `${LANGUAGE_STORAGE_KEY}:${user?.id ?? "guest"}`;
+  const [launcherPos, setLauncherPos] = useState<{ x: number; y: number } | null>(null);
+  const dragStateRef = useRef<{ dragging: boolean; moved: boolean; startX: number; startY: number; originX: number; originY: number }>({
+    dragging: false,
+    moved: false,
+    startX: 0,
+    startY: 0,
+    originX: 0,
+    originY: 0,
+  });
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(LAUNCHER_POSITION_KEY);
+      if (saved) setLauncherPos(JSON.parse(saved) as { x: number; y: number });
+    } catch {
+      // ignore malformed/unavailable storage
+    }
+  }, []);
+
+  const clampPosition = (x: number, y: number) => {
+    const size = 64;
+    const margin = 8;
+    const maxX = window.innerWidth - size - margin;
+    const maxY = window.innerHeight - size - margin;
+    return { x: Math.min(Math.max(margin, x), Math.max(margin, maxX)), y: Math.min(Math.max(margin, y), Math.max(margin, maxY)) };
+  };
+
+  const onLauncherPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    dragStateRef.current = {
+      dragging: true,
+      moved: false,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: rect.left,
+      originY: rect.top,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onLauncherPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const state = dragStateRef.current;
+    if (!state.dragging) return;
+    const dx = event.clientX - state.startX;
+    const dy = event.clientY - state.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) state.moved = true;
+    if (state.moved) {
+      setLauncherPos(clampPosition(state.originX + dx, state.originY + dy));
+    }
+  };
+
+  const onLauncherPointerUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const state = dragStateRef.current;
+    state.dragging = false;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (state.moved) {
+      setLauncherPos((current) => {
+        if (current) {
+          try {
+            window.localStorage.setItem(LAUNCHER_POSITION_KEY, JSON.stringify(current));
+          } catch {
+            // ignore storage failures (private mode, quota, etc.)
+          }
+        }
+        return current;
+      });
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -166,11 +236,17 @@ export function ChatAssistant() {
       <Button
         type="button"
         aria-label={t("assistant.open")}
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          if (!dragStateRef.current.moved) setIsOpen(true);
+        }}
+        onPointerDown={onLauncherPointerDown}
+        onPointerMove={onLauncherPointerMove}
+        onPointerUp={onLauncherPointerUp}
+        style={launcherPos ? { left: launcherPos.x, top: launcherPos.y, right: "auto", bottom: "auto" } : undefined}
         className={cn(
-          "fixed bottom-6 z-50 h-16 w-16 rounded-full border-2 border-primary-foreground/70 shadow-xl ring-4 ring-primary/20",
+          "fixed bottom-6 z-50 h-16 w-16 touch-none cursor-grab rounded-full border-2 border-primary-foreground/70 shadow-xl ring-4 ring-primary/20 active:cursor-grabbing",
           "bg-primary text-primary-foreground hover:bg-primary/90",
-          sideClass,
+          !launcherPos && sideClass,
         )}
       >
         <Bot className="h-8 w-8" />

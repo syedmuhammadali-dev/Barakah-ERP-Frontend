@@ -28,6 +28,10 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   initials: z.string().min(1, "Initials required").max(3, "Max 3 characters"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
+  phone: z.string().optional().or(z.literal("")),
+  nicNumber: z.string().optional().or(z.literal("")),
+  fatherName: z.string().optional().or(z.literal("")),
+  address: z.string().optional().or(z.literal("")),
   profileImageUrl: z.string().optional().or(z.literal("")),
   target: z.coerce.number().min(0, "Target must be positive"),
   commissionRate: z.coerce.number().min(0, "Commission rate must be positive").max(100, "Cannot exceed 100%"),
@@ -64,6 +68,10 @@ export function Salesmen() {
       name: "",
       initials: "",
       email: "",
+      phone: "",
+      nicNumber: "",
+      fatherName: "",
+      address: "",
       profileImageUrl: "",
       target: 10000,
       commissionRate: 5,
@@ -80,6 +88,10 @@ export function Salesmen() {
         name: selectedSalesman.name,
         initials: selectedSalesman.initials,
         email: selectedSalesman.email ?? "",
+        phone: selectedSalesman.phone ?? "",
+        nicNumber: selectedSalesman.nicNumber ?? "",
+        fatherName: selectedSalesman.fatherName ?? "",
+        address: selectedSalesman.address ?? "",
         profileImageUrl: selectedSalesman.profileImageUrl ?? "",
         target: selectedSalesman.target,
         commissionRate: selectedSalesman.commissionRate,
@@ -91,6 +103,10 @@ export function Salesmen() {
       name: "",
       initials: "",
       email: "",
+      phone: "",
+      nicNumber: "",
+      fatherName: "",
+      address: "",
       profileImageUrl: "",
       target: 10000,
       commissionRate: 5,
@@ -116,6 +132,10 @@ export function Salesmen() {
             name: values.name,
             initials: values.initials,
             email: values.email || null,
+            phone: values.phone || null,
+            nicNumber: values.nicNumber || null,
+            fatherName: values.fatherName || null,
+            address: values.address || null,
             profileImageUrl: values.profileImageUrl || null,
             target: values.target,
             commissionRate: values.commissionRate,
@@ -131,6 +151,10 @@ export function Salesmen() {
             name: values.name,
             initials: values.initials,
             email: values.email || undefined,
+            phone: values.phone || undefined,
+            nicNumber: values.nicNumber || undefined,
+            fatherName: values.fatherName || undefined,
+            address: values.address || undefined,
             profileImageUrl: values.profileImageUrl || undefined,
             target: values.target,
             commissionRate: values.commissionRate,
@@ -258,6 +282,62 @@ export function Salesmen() {
                   </FormItem>
                 )}
               />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("salesmen.phoneOptional")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="03xx-xxxxxxx" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="nicNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("salesmen.nicOptional")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="xxxxx-xxxxxxx-x" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="fatherName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("salesmen.fatherNameOptional")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Abdullah Khan" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("salesmen.addressOptional")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Street, City" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}

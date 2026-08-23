@@ -89,7 +89,7 @@ export function SubscriptionGuard({ children }: { children: React.ReactNode }) {
             </p>
           </div>
           <div className="bg-muted/50 p-4 rounded-lg font-mono text-lg">
-            PKR 10,000 / month
+            PKR 5,000 / month
           </div>
           <div className="flex gap-4">
             <Button

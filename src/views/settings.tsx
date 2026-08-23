@@ -28,6 +28,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   contactEmail: z.string().email("Valid email is required").optional().or(z.literal("")),
   address: z.string().optional(),
+  websiteUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
   baseCurrency: z.string().min(1),
   timezone: z.string().min(1),
   vatRate: z.coerce.number().min(0).max(100),
@@ -78,6 +79,7 @@ export function Settings() {
       phone: "",
       contactEmail: "",
       address: "",
+      websiteUrl: "",
       baseCurrency: "PKR",
       timezone: "Asia/Riyadh",
       vatRate: 15,
@@ -97,6 +99,7 @@ export function Settings() {
         phone: profile?.phone || "",
         contactEmail: settings?.contactEmail || "",
         address: settings?.address || "",
+        websiteUrl: settings?.websiteUrl || "",
         baseCurrency: settings?.baseCurrency || "PKR",
         timezone: settings?.timezone || "Asia/Riyadh",
         vatRate: settings?.vatRate ?? 15,
@@ -138,6 +141,7 @@ export function Settings() {
             shopName: values.shopName,
             contactEmail: values.contactEmail,
             address: values.address,
+            websiteUrl: values.websiteUrl || null,
             baseCurrency: values.baseCurrency,
             timezone: values.timezone,
             vatRate: values.vatRate,
@@ -265,6 +269,22 @@ export function Settings() {
                           <div className="relative">
                             <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input className="pl-9" placeholder={t("settings.physicalAddressPlaceholder")} {...field} disabled={isLoading} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="websiteUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("settings.websiteUrl")}</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Globe className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input className="pl-9" placeholder={t("settings.websiteUrlPlaceholder")} {...field} disabled={isLoading} />
                           </div>
                         </FormControl>
                         <FormMessage />

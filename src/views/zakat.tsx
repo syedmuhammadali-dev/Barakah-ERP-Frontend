@@ -1,6 +1,12 @@
 "use client";
 
-import { useGetZakatStatus, useListZakatRecords, useCalculateZakat } from "@barakah/api-client-react";
+import {
+  useGetZakatStatus,
+  useListZakatRecords,
+  useCalculateZakat,
+  getGetZakatStatusQueryKey,
+  getListZakatRecordsQueryKey,
+} from "@barakah/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -63,8 +69,8 @@ export function Zakat() {
           title: t("zakat.zakatCalculated"),
           description: t("zakat.zakatRecorded"),
         });
-        queryClient.invalidateQueries({ queryKey: ["/api/zakat/status"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/zakat/records"] });
+        queryClient.invalidateQueries({ queryKey: getGetZakatStatusQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListZakatRecordsQueryKey() });
       },
       onError: (error) => {
         toast({
@@ -199,7 +205,14 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.inventoryValuePkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0" {...field} value={field.value as number} className="bg-muted/50 font-mono text-right" />
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            {...field}
+                            value={field.value as number}
+                            onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                            className="bg-muted/50 font-mono text-right"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -212,7 +225,14 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.cashOnHandPkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0" {...field} value={field.value as number} className="bg-muted/50 font-mono text-right" />
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            {...field}
+                            value={field.value as number}
+                            onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                            className="bg-muted/50 font-mono text-right"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -225,7 +245,14 @@ export function Zakat() {
                       <FormItem>
                         <FormLabel>{t("zakat.deductibleDebtsPkr")}</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0" {...field} value={field.value as number} className="bg-muted/50 font-mono text-right text-destructive" />
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            {...field}
+                            value={field.value as number}
+                            onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                            className="bg-muted/50 font-mono text-right text-destructive"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -237,9 +264,9 @@ export function Zakat() {
                       <span className="text-sm font-medium">{t("zakat.netZakatableAssets")}</span>
                       <span className="font-mono text-sm">
                         {formatMoney(
-                          (form.watch("inventoryValue") as number) +
-                            (form.watch("cashOnHand") as number) -
-                            (form.watch("debts") as number),
+                          (Number(form.watch("inventoryValue")) || 0) +
+                          (Number(form.watch("cashOnHand")) || 0) -
+                          (Number(form.watch("debts")) || 0),
                         )}
                       </span>
                     </div>

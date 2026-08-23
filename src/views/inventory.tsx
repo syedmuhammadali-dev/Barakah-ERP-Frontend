@@ -66,7 +66,7 @@ export function Inventory() {
     category: string;
     brand?: string | null;
     salePrice: number;
-    margin: number;
+    priceCode?: string | null;
     stockLevel: number;
     maxStock: number;
     status: string;
@@ -100,7 +100,7 @@ export function Inventory() {
     category: z.string().min(2, "Category is required"),
     brand: z.string().optional().default(""),
     salePrice: z.coerce.number().min(0),
-    margin: z.coerce.number().min(0).max(100),
+    priceCode: z.string().optional().default(""),
     stockLevel: z.coerce.number().min(0),
     maxStock: z.coerce.number().min(0),
     isAmanat: z.boolean().default(false),
@@ -118,7 +118,7 @@ export function Inventory() {
       category: "",
       brand: "",
       salePrice: 0,
-      margin: 0,
+      priceCode: "",
       stockLevel: 0,
       maxStock: 0,
       isAmanat: false,
@@ -135,7 +135,7 @@ export function Inventory() {
       category: "",
       brand: "",
       salePrice: 0,
-      margin: 0,
+      priceCode: "",
       stockLevel: 0,
       maxStock: 0,
       isAmanat: false,
@@ -155,7 +155,7 @@ export function Inventory() {
       category: selectedProduct.category,
       brand: selectedProduct.brand ?? "",
       salePrice: selectedProduct.salePrice,
-      margin: selectedProduct.margin,
+      priceCode: selectedProduct.priceCode ?? "",
       stockLevel: selectedProduct.stockLevel,
       maxStock: selectedProduct.maxStock,
       isAmanat: selectedProduct.isAmanat,
@@ -196,7 +196,7 @@ export function Inventory() {
           name: values.name,
           category: values.category,
           salePrice: values.salePrice,
-          margin: values.margin,
+          priceCode: values.priceCode,
           stockLevel: values.stockLevel,
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
@@ -262,7 +262,7 @@ export function Inventory() {
           category: values.category,
           brand: values.brand || undefined,
           salePrice: values.salePrice,
-          margin: values.margin,
+          priceCode: values.priceCode,
           stockLevel: values.stockLevel,
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
@@ -375,10 +375,10 @@ export function Inventory() {
                         <FormMessage />
                       </FormItem>
                     )} />
-                    <FormField control={form.control} name="margin" render={({ field }) => (
+                    <FormField control={form.control} name="priceCode" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("inventory.marginPercent")}</FormLabel>
-                        <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} value={field.value as number} /></FormControl>
+                        <FormLabel>{t("inventory.priceCode")}</FormLabel>
+                        <FormControl><Input placeholder={t("inventory.priceCodePlaceholder")} {...field} value={field.value as string} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -461,10 +461,10 @@ export function Inventory() {
                 )} />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <FormField control={editForm.control} name="margin" render={({ field }) => (
+                <FormField control={editForm.control} name="priceCode" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("inventory.marginPercent")}</FormLabel>
-                    <FormControl><Input type="number" min="0" max="100" step="0.1" placeholder={t("inventory.marginPlaceholder")} {...field} value={field.value as number} /></FormControl>
+                    <FormLabel>{t("inventory.priceCode")}</FormLabel>
+                    <FormControl><Input placeholder={t("inventory.priceCodePlaceholder")} {...field} value={field.value as string} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -709,6 +709,7 @@ export function Inventory() {
                   <TableHead className="w-25">{t("inventory.sku")}</TableHead>
                   <TableHead>{t("inventory.productDetails")}</TableHead>
                   <TableHead>{t("inventory.priceMargin")}</TableHead>
+                  <TableHead className="w-25">{t("inventory.priceCode")}</TableHead>
                   <TableHead className="w-50">{t("inventory.stockLevel")}</TableHead>
                   <TableHead>{t("inventory.status")}</TableHead>
                   <TableHead className="text-right">{t("inventory.actions")}</TableHead>
@@ -716,7 +717,9 @@ export function Inventory() {
               </TableHeader>
               <TableBody>
                 {(products ?? []).map((product) => {
-                  const stockPercent = Math.min(100, Math.round((product.stockLevel / product.maxStock) * 100));
+                  const stockPercent = product.maxStock > 0
+                    ? Math.min(100, Math.round((product.stockLevel / product.maxStock) * 100))
+                    : 0;
 
                   return (
                     <TableRow key={product.id} className="group hover:bg-muted/20">
@@ -739,8 +742,8 @@ export function Inventory() {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">{formatMoney(product.salePrice)}</div>
-                        <div className="text-xs text-muted-foreground">{product.margin}{t("inventory.marginSuffix")}</div>
                       </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{product.priceCode || "—"}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-xs font-medium">{product.stockLevel} / {product.maxStock}</span>
