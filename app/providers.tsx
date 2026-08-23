@@ -8,6 +8,7 @@ import { useState } from "react";
 import { LocaleProvider } from "@/lib/i18n";
 import { RouteTransitionProvider } from "@/components/route-transition";
 import { setBaseUrl } from "@barakah/api-client-react";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 
 setBaseUrl(null);
 
@@ -35,6 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <RouteTransitionProvider>
           <QueryClientProvider client={queryClient}>
             <TooltipProvider>
+              <AnnouncementBanner />
               {children}
               <Toaster />
             </TooltipProvider>
