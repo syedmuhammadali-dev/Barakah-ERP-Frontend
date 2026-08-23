@@ -31,6 +31,9 @@ export const metadata: Metadata = {
     description:
       "Pakistan-first ERP for inventory, sales, zakat, and retail operations.",
   },
+  verification: {
+    google: "aAkRFPqsfqlb67JF5wByOAZpg2O_6CKpGpUFQ1fLFRA",
+  },
 };
 
 export default function RootLayout({
