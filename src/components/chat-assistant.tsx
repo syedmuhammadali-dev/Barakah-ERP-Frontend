@@ -2,6 +2,7 @@
 
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bot, Languages, LoaderCircle, Mic, Send, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { getApiErrorMessage } from "@/lib/api-error";
 import { useAppLocale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@barakah/auth-web";
+import { useRouteTransition } from "@/components/route-transition";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -47,6 +49,8 @@ const LAUNCHER_POSITION_KEY = "barakah-assistant-launcher-pos-v1";
 export function ChatAssistant() {
   const { isUrdu, t } = useAppLocale();
   const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const { beginTransition } = useRouteTransition();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -165,11 +169,18 @@ export function ChatAssistant() {
     setIsSending(true);
 
     try {
-      const response = await apiRequest<{ reply: string }>("/api/assistant/chat", {
-        method: "POST",
-        body: JSON.stringify({ messages: nextMessages.slice(-10), language: assistantLanguage }),
-      });
+      const response = await apiRequest<{ reply: string; action?: { type: "navigate"; path: string } }>(
+        "/api/assistant/chat",
+        {
+          method: "POST",
+          body: JSON.stringify({ messages: nextMessages.slice(-10), language: assistantLanguage }),
+        },
+      );
       setMessages([...nextMessages, { role: "assistant", content: response.reply }]);
+      if (response.action?.type === "navigate" && response.action.path) {
+        beginTransition();
+        router.push(response.action.path);
+      }
     } catch (err) {
       // Surface the real reason inline rather than failing silently.
       setError(getApiErrorMessage(err, t("assistant.error")));

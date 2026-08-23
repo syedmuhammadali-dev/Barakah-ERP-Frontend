@@ -141,51 +141,47 @@ export function Landing() {
         className="py-24 bg-muted/30 border-y border-border px-6"
       >
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5 }}
+          >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               {t("landing.featuresTitle")}
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               {t("landing.featuresSubtitle")}
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="bg-card border-border/50 hover:border-primary/50 transition-colors">
-              <CardContent className="pt-8">
-                <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
-                  <BarChart3 className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{t("landing.feature1Title")}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {t("landing.feature1Desc")}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card border-border/50 hover:border-primary/50 transition-colors">
-              <CardContent className="pt-8">
-                <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
-                  <Store className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{t("landing.feature2Title")}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {t("landing.feature2Desc")}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card border-border/50 hover:border-primary/50 transition-colors">
-              <CardContent className="pt-8">
-                <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
-                  <Calculator className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{t("landing.feature3Title")}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {t("landing.feature3Desc")}
-                </p>
-              </CardContent>
-            </Card>
+            {[
+              { icon: BarChart3, title: t("landing.feature1Title"), desc: t("landing.feature1Desc") },
+              { icon: Store, title: t("landing.feature2Title"), desc: t("landing.feature2Desc") },
+              { icon: Calculator, title: t("landing.feature3Title"), desc: t("landing.feature3Desc") },
+            ].map(({ icon: Icon, title, desc }, i) => (
+              <motion.div
+                key={title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <Card className="bg-card border-border/50 hover:border-primary/50 hover:-translate-y-1 transition-all h-full">
+                  <CardContent className="pt-8">
+                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-xl font-bold mb-3">{title}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      {desc}
+                    </p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -194,7 +190,13 @@ export function Landing() {
       <section id="compliance" className="py-24 px-6 overflow-hidden">
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 space-y-8">
+            <motion.div
+              className="flex-1 space-y-8"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6 }}
+            >
               <h2 className="text-3xl md:text-5xl font-bold leading-tight">
                 {t("landing.complianceTitle")}
               </h2>
@@ -208,14 +210,27 @@ export function Landing() {
                   t("landing.complianceItem3"),
                   t("landing.complianceItem4"),
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3">
+                  <motion.li
+                    key={i}
+                    className="flex items-center gap-3"
+                    initial={{ opacity: 0, x: -12 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: i * 0.08 }}
+                  >
                     <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                     <span className="font-medium">{item}</span>
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
-            </div>
-            <div className="flex-1 w-full relative">
+            </motion.div>
+            <motion.div
+              className="flex-1 w-full relative"
+              initial={{ opacity: 0, x: 30, scale: 0.95 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6 }}
+            >
               <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent blur-3xl rounded-full" />
               <Card className="relative border-primary/20 bg-background/50 backdrop-blur-sm overflow-hidden">
                 <div className="p-8">
@@ -253,7 +268,7 @@ export function Landing() {
                   </div>
                 </div>
               </Card>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -264,14 +279,27 @@ export function Landing() {
         className="py-24 bg-muted/30 border-y border-border px-6"
       >
         <div className="container mx-auto max-w-5xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            {t("landing.pricingTitle")}
-          </h2>
-          <p className="text-muted-foreground mb-16 max-w-2xl mx-auto">
-            {t("landing.pricingSubtitle")}
-          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              {t("landing.pricingTitle")}
+            </h2>
+            <p className="text-muted-foreground mb-16 max-w-2xl mx-auto">
+              {t("landing.pricingSubtitle")}
+            </p>
+          </motion.div>
 
-          <div className="max-w-md mx-auto text-left">
+          <motion.div
+            className="max-w-md mx-auto text-left"
+            initial={{ opacity: 0, y: 30, scale: 0.97 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <Card className="border-primary shadow-[0_0_30px_-10px_rgba(255,193,7,0.3)] relative">
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full">
                 {t("landing.recommended")}
@@ -321,7 +349,7 @@ export function Landing() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         </div>
       </section>
 

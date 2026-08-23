@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Wrench,
   Receipt,
   BarChart3,
   Calculator,
@@ -36,6 +37,7 @@ import { AppLink, useRouteTransition } from "@/components/route-transition";
 import { LanguageToggle } from "@/components/language-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAppLocale } from "@/lib/i18n";
+import { ProductTour } from "@/components/product-tour";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -55,6 +57,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { name: t("nav.dashboard"), href: "/dashboard", icon: LayoutDashboard },
     { name: t("nav.inventory"), href: "/inventory", icon: Package },
     { name: t("nav.sales"), href: "/sales", icon: ShoppingCart },
+    { name: t("nav.mechanicBills"), href: "/mechanic-bills", icon: Wrench },
     { name: t("nav.bills"), href: "/bills", icon: Receipt },
     { name: t("nav.reports"), href: "/reports", icon: BarChart3 },
     { name: t("nav.zakat"), href: "/zakat", icon: Calculator },
@@ -109,14 +112,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
-                        <AppLink
-                          href={item.href}
-                          className="flex items-center gap-3"
-                        >
-                          <item.icon className="h-5 w-5" />
-                          <span>{item.name}</span>
-                        </AppLink>
-                      </SidebarMenuButton>
+                      <AppLink
+                        href={item.href}
+                        className="flex items-center gap-3"
+                        data-tour={`nav-${item.href.slice(1)}`}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        <span>{item.name}</span>
+                      </AppLink>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               })}
@@ -170,6 +174,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="p-8 pt-4">{children}</div>
         </main>
       </div>
+      <ProductTour />
     </SidebarProvider>
   );
 }
