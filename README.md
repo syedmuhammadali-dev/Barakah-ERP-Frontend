@@ -45,6 +45,9 @@ npm run typecheck
 - Production should set `NEXT_PUBLIC_API_TARGET` to the deployed backend URL so the frontend never falls back to localhost.
 - The current UI matches the existing Barakah ERP look and behavior.
 - Supports English and Urdu (RTL) via `src/lib/i18n.tsx`; the sidebar and layout flip direction automatically in Urdu.
-- Pages: Dashboard, Inventory (with bulk bill upload/OCR), Sales (multi-item, PDF bill download), Bills (purchase/supplier bills), Reports, Salesmen, Suppliers, Zakat, Settings, Subscription.
+- Pages: Dashboard, Inventory (with bulk bill upload/OCR), Sales (multi-item, editable total, PDF bill download), Mechanic Bills (repair-shop job cards, below Sales in the sidebar), Bills (purchase/supplier bills), Reports, Salesmen, Suppliers, Zakat, Notes, Data Viewer, Subscription, Settings (moved to the bottom of the sidebar).
 - Bill OCR (`src/lib/bill-ocr.ts`) runs entirely client-side (tesseract.js for images, pdfjs-dist for PDFs) — no server-side OCR dependency or API key required.
 - Restricted/paused-subscription tenants stay read-only: `components/subscription-guard.tsx` shows a persistent banner and periodic reminder while still letting the user view their data.
+- `components/chat-assistant.tsx` is a floating, draggable, bilingual AI chat widget; it can also navigate the app or search the signed-in user's own records when asked (tool-calling on the backend).
+- `components/product-tour.tsx` shows a one-time spotlight tour of the sidebar to the shared demo account and to every account on its first sign-in (localStorage-tracked, no external library).
+- `app/robots.ts` and `app/sitemap.ts` provide `robots.txt`/`sitemap.xml`; `app/layout.tsx` sets the Google Search Console verification meta tag.
