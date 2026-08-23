@@ -23,8 +23,13 @@ export default function HomePage() {
       "Pakistan-first ERP for inventory, sales, zakat, and retail operations.",
     offers: {
       "@type": "Offer",
-      price: "10000",
+      price: "5000",
       priceCurrency: "PKR",
+      priceValidUntil: "2027-12-31",
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "Pakistan",
     },
   };
 

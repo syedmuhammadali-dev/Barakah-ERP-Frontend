@@ -173,7 +173,19 @@ export function ChatAssistant() {
         "/api/assistant/chat",
         {
           method: "POST",
-          body: JSON.stringify({ messages: nextMessages.slice(-10), language: assistantLanguage }),
+          body: JSON.stringify({
+            // Truncate defensively: an old, unusually long assistant reply
+            // sitting in this browser's saved history (from before a
+            // verbosity fix, or a model that ignored length limits) would
+            // otherwise fail the backend's per-message length check on
+            // every future message, permanently showing "please provide a
+            // valid message" until the user cleared their chat.
+            messages: nextMessages.slice(-10).map((m) => ({
+              ...m,
+              content: m.content.length > 1500 ? `${m.content.slice(0, 1500)}…` : m.content,
+            })),
+            language: assistantLanguage,
+          }),
         },
       );
       setMessages([...nextMessages, { role: "assistant", content: response.reply }]);

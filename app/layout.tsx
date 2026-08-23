@@ -11,6 +11,17 @@ export const metadata: Metadata = {
   },
   description:
     "Pakistan-first ERP for inventory, sales, zakat, and retail operations.",
+  keywords: [
+    "ERP Pakistan",
+    "retail ERP software",
+    "inventory management Pakistan",
+    "zakat calculator app",
+    "shop management software",
+    "sales and billing software",
+    "mechanic shop software",
+    "Barakah ERP",
+  ],
+  authors: [{ name: SITE_NAME }],
   icons: {
     icon: "/favicon.svg",
   },
@@ -24,6 +35,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: SITE_NAME,
     type: "website",
+    locale: "en_PK",
   },
   twitter: {
     card: "summary_large_image",
