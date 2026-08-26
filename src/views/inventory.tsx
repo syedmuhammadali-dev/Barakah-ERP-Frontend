@@ -10,9 +10,10 @@ import {
   useDeleteProduct,
   useListProducts,
   useGetBusinessProfile,
+  useGetSettings,
 } from "@barakah/api-client-react";
 import { getBusinessTypeConfig } from "@/lib/business-types";
-import { computeAdjustedStock } from "@/lib/inventory-utils";
+import { computeAdjustedStock, encodePriceCode } from "@/lib/inventory-utils";
 import { BusinessTypeExtraFields } from "@/components/business-type-extra-fields";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,6 +68,7 @@ export function Inventory() {
     brand?: string | null;
     salePrice: number;
     priceCode?: string | null;
+    costPrice?: number | null;
     stockLevel: number;
     maxStock: number;
     status: string;
@@ -90,6 +92,8 @@ export function Inventory() {
 
   const { data: businessProfile } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
   const businessTypeConfig = useMemo(() => getBusinessTypeConfig(businessProfile?.businessType), [businessProfile?.businessType]);
+  const { data: shopSettings } = useGetSettings();
+  const priceCodeMap = shopSettings?.priceCodeMap ?? [];
 
   const { data: summary, isLoading: summaryLoading, error: summaryError } = useGetInventorySummary();
   const { data: products, isLoading: productsLoading, error: productsError } = useListProducts({ search: searchTerm.length > 2 ? searchTerm : undefined });
@@ -101,6 +105,7 @@ export function Inventory() {
     brand: z.string().optional().default(""),
     salePrice: z.coerce.number().min(0),
     priceCode: z.string().optional().default(""),
+    costPrice: z.string().optional().default(""),
     stockLevel: z.coerce.number().min(0),
     maxStock: z.coerce.number().min(0),
     isAmanat: z.boolean().default(false),
@@ -119,6 +124,7 @@ export function Inventory() {
       brand: "",
       salePrice: 0,
       priceCode: "",
+      costPrice: "",
       stockLevel: 0,
       maxStock: 0,
       isAmanat: false,
@@ -136,6 +142,7 @@ export function Inventory() {
       brand: "",
       salePrice: 0,
       priceCode: "",
+      costPrice: "",
       stockLevel: 0,
       maxStock: 0,
       isAmanat: false,
@@ -156,6 +163,7 @@ export function Inventory() {
       brand: selectedProduct.brand ?? "",
       salePrice: selectedProduct.salePrice,
       priceCode: selectedProduct.priceCode ?? "",
+      costPrice: selectedProduct.costPrice != null ? String(selectedProduct.costPrice) : "",
       stockLevel: selectedProduct.stockLevel,
       maxStock: selectedProduct.maxStock,
       isAmanat: selectedProduct.isAmanat,
@@ -197,6 +205,7 @@ export function Inventory() {
           category: values.category,
           salePrice: values.salePrice,
           priceCode: values.priceCode,
+          costPrice: values.costPrice ? Number(values.costPrice) : null,
           stockLevel: values.stockLevel,
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
@@ -263,6 +272,7 @@ export function Inventory() {
           brand: values.brand || undefined,
           salePrice: values.salePrice,
           priceCode: values.priceCode,
+          costPrice: values.costPrice ? Number(values.costPrice) : undefined,
           stockLevel: values.stockLevel,
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
@@ -384,6 +394,15 @@ export function Inventory() {
                     )} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="costPrice" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("inventory.costPrice")}</FormLabel>
+                        <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.costPricePlaceholder")} {...field} value={field.value as string} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="stockLevel" render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("inventory.stockLevel")}</FormLabel>
@@ -465,6 +484,13 @@ export function Inventory() {
                   <FormItem>
                     <FormLabel>{t("inventory.priceCode")}</FormLabel>
                     <FormControl><Input placeholder={t("inventory.priceCodePlaceholder")} {...field} value={field.value as string} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={editForm.control} name="costPrice" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("inventory.costPrice")}</FormLabel>
+                    <FormControl><Input type="number" min="0" step="0.01" placeholder={t("inventory.costPricePlaceholder")} {...field} value={field.value as string} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -708,7 +734,7 @@ export function Inventory() {
                 <TableRow>
                   <TableHead className="w-25">{t("inventory.sku")}</TableHead>
                   <TableHead>{t("inventory.productDetails")}</TableHead>
-                  <TableHead>{t("inventory.priceMargin")}</TableHead>
+                  <TableHead>{priceCodeMap.length > 0 ? t("inventory.costCode") : t("inventory.priceMargin")}</TableHead>
                   <TableHead className="w-25">{t("inventory.priceCode")}</TableHead>
                   <TableHead className="w-50">{t("inventory.stockLevel")}</TableHead>
                   <TableHead>{t("inventory.status")}</TableHead>
@@ -741,7 +767,11 @@ export function Inventory() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{formatMoney(product.salePrice)}</div>
+                        {priceCodeMap.length > 0 && product.costPrice != null ? (
+                          <div className="font-mono font-medium">{encodePriceCode(product.costPrice, priceCodeMap)}</div>
+                        ) : (
+                          <div className="font-medium">{formatMoney(product.salePrice)}</div>
+                        )}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">{product.priceCode || "—"}</TableCell>
                       <TableCell>

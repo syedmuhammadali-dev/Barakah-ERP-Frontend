@@ -5,18 +5,20 @@ import {
   getGetSalesSummaryQueryKey,
   getListSalesQueryKey,
   useCreateSale,
+  useUpdateSale,
   useGetSalesSummary,
   useListSales,
   useListSalesmen,
   useListProducts,
   useGetBusinessProfile,
+  type Sale,
 } from "@barakah/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import { Banknote, CreditCard, Download, Plus, Search, ShieldCheck, ShoppingCart, Trash2, Wallet } from "lucide-react";
+import { Banknote, CreditCard, Download, Eye, Pencil, Plus, Search, ShieldCheck, ShoppingCart, Trash2, Wallet } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,10 +65,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { useAppLocale } from "@/lib/i18n";
-import { generateBillPdf } from "@/lib/bill-pdf";
+import { generateBillPdf, type BillData } from "@/lib/bill-pdf";
+import { InvoicePreviewDialog } from "@/components/invoice-preview-dialog";
 
 const PAYMENT_METHODS = [
   "cash",
@@ -92,9 +106,13 @@ export function Sales() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [previewBill, setPreviewBill] = useState<BillData | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createSale = useCreateSale();
+  const updateSale = useUpdateSale();
   const { data: salesmen } = useListSalesmen();
   const { data: allProducts } = useListProducts();
   const { data: businessProfile } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
@@ -141,17 +159,19 @@ export function Sales() {
     ).slice(0, 10);
   };
 
+  const defaultFormValues: SaleFormValues = {
+    customerName: "",
+    customerPhone: "",
+    salesmanId: "none",
+    paymentMethod: "cash",
+    discount: 0,
+    total: 0,
+    items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
+  };
+
   const form = useForm({
     resolver: zodResolver(saleFormSchema),
-    defaultValues: {
-      customerName: "",
-      customerPhone: "",
-      salesmanId: "none",
-      paymentMethod: "cash",
-      discount: 0,
-      total: 0,
-      items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
-    },
+    defaultValues: defaultFormValues,
   });
 
   const { fields: itemFields, append: appendItem, remove: removeItem } = useFieldArray({
@@ -175,6 +195,33 @@ export function Sales() {
       form.setValue("total", computedTotal);
     }
   }, [computedTotal, isTotalManual, form]);
+
+  useEffect(() => {
+    if (!isAddOpen) return;
+    if (editingSale) {
+      form.reset({
+        customerName: editingSale.customerName,
+        customerPhone: editingSale.customerPhone ?? "",
+        salesmanId: editingSale.salesmanId ? String(editingSale.salesmanId) : "none",
+        paymentMethod: editingSale.paymentMethod,
+        discount: editingSale.discount,
+        total: editingSale.total,
+        items: editingSale.items && editingSale.items.length > 0
+          ? editingSale.items.map((item: NonNullable<Sale["items"]>[number]) => ({
+            productId: item.productId ? String(item.productId) : "",
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          }))
+          : [{ productId: "", productName: editingSale.productName ?? "", quantity: 1, unitPrice: editingSale.total }],
+      });
+      setIsTotalManual(true);
+    } else {
+      form.reset(defaultFormValues);
+      setIsTotalManual(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAddOpen, editingSale, form]);
 
   const handleExportCsv = () => {
     const rows = [
@@ -210,52 +257,75 @@ export function Sales() {
   };
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const payload = {
+      customerName: values.customerName?.trim() || "Walk-in Customer",
+      customerPhone: values.customerPhone?.trim() || undefined,
+      salesmanId:
+        values.salesmanId && values.salesmanId !== "none"
+          ? Number(values.salesmanId)
+          : undefined,
+      paymentMethod: values.paymentMethod,
+      discount: values.discount,
+      total: values.total,
+      items: values.items.map((item) => ({
+        productId: item.productId ? Number(item.productId) : undefined,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
+    };
+
     try {
-      await createSale.mutateAsync({
-        data: {
-          customerName: values.customerName?.trim() || "Walk-in Customer",
-          customerPhone: values.customerPhone?.trim() || undefined,
-          salesmanId:
-            values.salesmanId && values.salesmanId !== "none"
-              ? Number(values.salesmanId)
-              : undefined,
-          paymentMethod: values.paymentMethod,
-          discount: values.discount,
-          total: values.total,
-          items: values.items.map((item) => ({
-            productId: item.productId ? Number(item.productId) : undefined,
-            productName: item.productName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          })),
-        },
-      });
+      if (editingSale) {
+        await updateSale.mutateAsync({ id: editingSale.id, data: payload });
+        toast({
+          title: t("sales.saleUpdated"),
+          description: t("sales.saleSaved").replace("{name}", payload.customerName),
+        });
+      } else {
+        await createSale.mutateAsync({ data: payload });
+        toast({
+          title: t("sales.saleRecorded"),
+          description: t("sales.saleSaved").replace("{name}", payload.customerName),
+        });
+      }
       await queryClient.invalidateQueries({ queryKey: getListSalesQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetSalesSummaryQueryKey() });
-      toast({
-        title: t("sales.saleRecorded"),
-        description: t("sales.saleSaved").replace("{name}", values.customerName?.trim() || "Walk-in Customer"),
-      });
-      form.reset({
-        customerName: "",
-        customerPhone: "",
-        salesmanId: "none",
-        paymentMethod: "cash",
-        discount: 0,
-        total: 0,
-        items: [{ productId: "", productName: "", quantity: 1, unitPrice: 0 }],
-      });
+      form.reset(defaultFormValues);
       setRowProductSearch({});
       setIsTotalManual(false);
       setIsAddOpen(false);
+      setEditingSale(null);
     } catch (error) {
       toast({
-        title: t("sales.unableToSaveSale"),
+        title: editingSale ? t("sales.unableToUpdateSale") : t("sales.unableToSaveSale"),
         description: getApiErrorMessage(error, t("sales.checkForm")),
         variant: "destructive",
       });
     }
   });
+
+  const openEditDialog = (sale: NonNullable<typeof sales>[number]) => {
+    setEditingSale(sale);
+    setIsAddOpen(true);
+  };
+
+  const handleDeleteSale = async () => {
+    if (!deleteTarget) return;
+    try {
+      await apiRequest(`/api/sales/${deleteTarget.id}`, { method: "DELETE" });
+      await queryClient.invalidateQueries({ queryKey: getListSalesQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getGetSalesSummaryQueryKey() });
+      toast({ title: t("sales.saleDeleted") });
+      setDeleteTarget(null);
+    } catch (error) {
+      toast({
+        title: t("sales.unableToDeleteSale"),
+        description: getApiErrorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
 
   const getPaymentIcon = (method: string) => {
     switch (method) {
@@ -292,7 +362,7 @@ export function Sales() {
 
   const statusLabel = (status: string): string => {
     switch (status) {
-      case "settled": return t("sales.settled");
+      case "done": return t("sales.done");
       case "pending": return t("sales.pending");
       case "credit": return t("sales.credit");
       case "refunded": return t("sales.refunded");
@@ -300,37 +370,60 @@ export function Sales() {
     }
   };
 
+  const billLabels = {
+    billTitle: t("sales.billTitle"),
+    billShop: t("sales.billShop"),
+    billCustomer: t("sales.billCustomer"),
+    billInvoice: t("sales.billInvoice"),
+    billDate: t("sales.billDate"),
+    billPayment: t("sales.billPayment"),
+    billItem: t("sales.billItem"),
+    billQty: t("sales.billQty"),
+    billUnitPrice: t("sales.billUnitPrice"),
+    billTotal: t("sales.billTotal"),
+    billDiscount: t("sales.billDiscount"),
+    billGrandTotal: t("sales.billGrandTotal"),
+  };
+
+  const buildBillData = (sale: NonNullable<typeof sales>[number]): BillData => ({
+    shopName: businessProfile?.businessName || t("sales.businessNameFallback"),
+    invoiceId: sale.invoiceId,
+    customerName: sale.customerName,
+    saleDate: sale.saleDate,
+    paymentMethodLabel: paymentMethodLabel(sale.paymentMethod),
+    items: (sale.items && sale.items.length > 0)
+      ? sale.items.map((item) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        lineTotal: item.lineTotal,
+      }))
+      : [{ productName: sale.productName ?? t("sales.na"), quantity: 1, unitPrice: sale.total }],
+    discount: sale.discount,
+    total: sale.total,
+    labels: billLabels,
+  });
+
   const handleDownloadBill = (sale: NonNullable<typeof sales>[number]) => {
-    generateBillPdf({
+    generateBillPdf(buildBillData(sale));
+  };
+
+  const handlePreviewFormInvoice = () => {
+    const values = form.getValues();
+    setPreviewBill({
       shopName: businessProfile?.businessName || t("sales.businessNameFallback"),
-      invoiceId: sale.invoiceId,
-      customerName: sale.customerName,
-      saleDate: sale.saleDate,
-      paymentMethodLabel: paymentMethodLabel(sale.paymentMethod),
-      items: (sale.items && sale.items.length > 0)
-        ? sale.items.map((item) => ({
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          lineTotal: item.lineTotal,
-        }))
-        : [{ productName: sale.productName ?? t("sales.na"), quantity: 1, unitPrice: sale.total }],
-      discount: sale.discount,
-      total: sale.total,
-      labels: {
-        billTitle: t("sales.billTitle"),
-        billShop: t("sales.billShop"),
-        billCustomer: t("sales.billCustomer"),
-        billInvoice: t("sales.billInvoice"),
-        billDate: t("sales.billDate"),
-        billPayment: t("sales.billPayment"),
-        billItem: t("sales.billItem"),
-        billQty: t("sales.billQty"),
-        billUnitPrice: t("sales.billUnitPrice"),
-        billTotal: t("sales.billTotal"),
-        billDiscount: t("sales.billDiscount"),
-        billGrandTotal: t("sales.billGrandTotal"),
-      },
+      invoiceId: editingSale?.invoiceId ?? t("sales.previewInvoice"),
+      customerName: values.customerName?.trim() || "Walk-in Customer",
+      saleDate: editingSale?.saleDate ?? new Date().toISOString(),
+      paymentMethodLabel: paymentMethodLabel(values.paymentMethod),
+      items: values.items.map((item) => ({
+        productName: item.productName || t("sales.na"),
+        quantity: Number(item.quantity) || 0,
+        unitPrice: Number(item.unitPrice) || 0,
+      })),
+      discount: Number(values.discount) || 0,
+      total: Number(values.total) || 0,
+      labels: billLabels,
     });
   };
 
@@ -347,17 +440,26 @@ export function Sales() {
           <Button variant="outline" className="border-border" onClick={handleExportCsv}>
             <Download className="w-4 h-4 mr-2" /> {t("sales.exportCsv")}
           </Button>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <Dialog
+            open={isAddOpen}
+            onOpenChange={(open) => {
+              setIsAddOpen(open);
+              if (!open) setEditingSale(null);
+            }}
+          >
             <DialogTrigger asChild>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => setEditingSale(null)}
+              >
                 <ShoppingCart className="w-4 h-4 mr-2" /> {t("sales.addSale")}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-130">
               <DialogHeader>
-                <DialogTitle>{t("sales.addNewSale")}</DialogTitle>
+                <DialogTitle>{editingSale ? t("sales.editSale") : t("sales.addNewSale")}</DialogTitle>
                 <DialogDescription>
-                  {t("sales.addSaleDescription")}
+                  {editingSale ? t("sales.editSaleDescription") : t("sales.addSaleDescription")}
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -585,9 +687,14 @@ export function Sales() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={createSale.isPending}>
-                    {createSale.isPending ? t("sales.saving") : t("sales.saveSale")}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="outline" onClick={handlePreviewFormInvoice}>
+                      <Eye className="h-4 w-4 mr-2" /> {t("sales.previewInvoice")}
+                    </Button>
+                    <Button type="submit" className="flex-1" disabled={createSale.isPending || updateSale.isPending}>
+                      {(createSale.isPending || updateSale.isPending) ? t("sales.saving") : t("sales.saveSale")}
+                    </Button>
+                  </div>
                 </form>
               </Form>
             </DialogContent>
@@ -719,7 +826,7 @@ export function Sales() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("sales.allStatus")}</SelectItem>
-                <SelectItem value="settled">{t("sales.settled")}</SelectItem>
+                <SelectItem value="done">{t("sales.done")}</SelectItem>
                 <SelectItem value="pending">{t("sales.pending")}</SelectItem>
                 <SelectItem value="credit">{t("sales.credit")}</SelectItem>
                 <SelectItem value="refunded">{t("sales.refunded")}</SelectItem>
@@ -786,7 +893,7 @@ export function Sales() {
                       <Badge
                         variant="outline"
                         className={
-                          sale.status === "settled"
+                          sale.status === "done"
                             ? "bg-green-500/10 text-green-500 border-green-500/20"
                             : sale.status === "credit"
                               ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
@@ -799,9 +906,26 @@ export function Sales() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleDownloadBill(sale)}>
-                        <Download className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" title={t("sales.previewInvoice")} onClick={() => setPreviewBill(buildBillData(sale))}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" title={t("sales.downloadBill")} onClick={() => handleDownloadBill(sale)}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" title={t("sales.editSale")} onClick={() => openEditDialog(sale)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title={t("sales.deleteSale")}
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteTarget({ id: sale.id, name: sale.invoiceId })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -817,6 +941,23 @@ export function Sales() {
           )}
         </CardContent>
       </Card>
+
+      <InvoicePreviewDialog bill={previewBill} onOpenChange={(open) => !open && setPreviewBill(null)} />
+
+      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("sales.deleteSaleTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("sales.deleteSaleDescription").replace("{name}", deleteTarget?.name ?? "")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("bills.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSale}>{t("bills.delete")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

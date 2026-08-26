@@ -33,12 +33,12 @@ export interface BillData {
   };
 }
 
-const PRIMARY_RGB: [number, number, number] = [21, 128, 61];
+const PRIMARY_RGB: [number, number, number] = [30, 41, 59];
 const MUTED_RGB: [number, number, number] = [107, 114, 128];
 const BORDER_RGB: [number, number, number] = [226, 232, 240];
 const ROW_SHADE_RGB: [number, number, number] = [246, 248, 250];
 
-export function generateBillPdf(bill: BillData): void {
+function buildBillDoc(bill: BillData): jsPDF {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 40;
@@ -187,5 +187,17 @@ export function generateBillPdf(bill: BillData): void {
     { align: "right" },
   );
 
-  doc.save(`${bill.invoiceId}.pdf`);
+  return doc;
+}
+
+export function generateBillPdf(bill: BillData): void {
+  buildBillDoc(bill).save(`${bill.invoiceId}.pdf`);
+}
+
+/** Builds the same invoice as a Blob URL for in-page preview (e.g. an
+ *  <iframe> inside a dialog) instead of triggering a download. Caller is
+ *  responsible for revoking the URL (URL.revokeObjectURL) when done. */
+export function getBillPdfPreviewUrl(bill: BillData): string {
+  const blob = buildBillDoc(bill).output("blob");
+  return URL.createObjectURL(blob);
 }

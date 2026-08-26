@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone, Download, Monitor } from "lucide-react";
+import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone, Download, Monitor, KeyRound, Hash, Plus, Trash2, Save } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -67,6 +67,67 @@ export function Settings() {
   const { data: profile, isLoading: profileLoading, error: profileError } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
   const updateMutation = useUpdateSettings();
   const updateProfileMutation = useUpdateBusinessProfile();
+
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [savingApiKey, setSavingApiKey] = useState(false);
+  const [priceCodeRows, setPriceCodeRows] = useState<{ digit: string; letter: string }[]>([]);
+  const [savingPriceCode, setSavingPriceCode] = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setPriceCodeRows(settings.priceCodeMap ?? []);
+    }
+  }, [settings]);
+
+  const handleSaveApiKey = async () => {
+    setSavingApiKey(true);
+    try {
+      await updateMutation.mutateAsync({ data: { aiApiKey: apiKeyInput.trim() || null } });
+      setApiKeyInput("");
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({ title: t(apiKeyInput.trim() ? "settings.apiKeySaved" : "settings.apiKeyRemoved") });
+    } catch (error) {
+      toast({
+        title: t("settings.apiKeySaveFailed"),
+        description: getApiErrorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
+      setSavingApiKey(false);
+    }
+  };
+
+  const handleAddPriceCodeRow = () => {
+    setPriceCodeRows((rows) => [...rows, { digit: "", letter: "" }]);
+  };
+
+  const handleUpdatePriceCodeRow = (index: number, field: "digit" | "letter", value: string) => {
+    setPriceCodeRows((rows) => rows.map((row, i) => (i === index ? { ...row, [field]: value } : row)));
+  };
+
+  const handleDeletePriceCodeRow = async (index: number) => {
+    const next = priceCodeRows.filter((_, i) => i !== index);
+    setPriceCodeRows(next);
+    await savePriceCodeMap(next);
+  };
+
+  const savePriceCodeMap = async (rows: { digit: string; letter: string }[]) => {
+    setSavingPriceCode(true);
+    try {
+      const cleaned = rows.filter((row) => row.digit.trim() && row.letter.trim());
+      await updateMutation.mutateAsync({ data: { priceCodeMap: cleaned } });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({ title: t("settings.priceCodeSaved") });
+    } catch (error) {
+      toast({
+        title: t("settings.priceCodeSaveFailed"),
+        description: getApiErrorMessage(error),
+        variant: "destructive",
+      });
+    } finally {
+      setSavingPriceCode(false);
+    }
+  };
 
   const isLoading = settingsLoading || profileLoading;
   const error = settingsError || profileError;
@@ -542,6 +603,116 @@ export function Settings() {
                 <Monitor className="w-4 h-4 mr-2" />
                 {t("settings.getDesktopApp")}
               </a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-1 space-y-2">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <KeyRound className="w-5 h-5 text-primary" /> {t("settings.aiAssistant")}
+          </h3>
+          <p className="text-sm text-muted-foreground">{t("settings.aiAssistantDescription")}</p>
+        </div>
+        <Card className="md:col-span-3">
+          <CardContent className="pt-6 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {settings?.hasCustomApiKey ? t("settings.apiKeySet") : t("settings.apiKeyNotSet")}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                type="password"
+                placeholder={t("settings.apiKeyPlaceholder")}
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                className="flex-1"
+                disabled={isLoading}
+              />
+              <Button type="button" onClick={handleSaveApiKey} disabled={savingApiKey || isLoading}>
+                {t("settings.saveApiKey")}
+              </Button>
+              {settings?.hasCustomApiKey ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    setApiKeyInput("");
+                    setSavingApiKey(true);
+                    try {
+                      await updateMutation.mutateAsync({ data: { aiApiKey: null } });
+                      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+                      toast({ title: t("settings.apiKeyRemoved") });
+                    } catch (error) {
+                      toast({ title: t("settings.apiKeySaveFailed"), description: getApiErrorMessage(error), variant: "destructive" });
+                    } finally {
+                      setSavingApiKey(false);
+                    }
+                  }}
+                  disabled={savingApiKey || isLoading}
+                >
+                  {t("settings.removeApiKey")}
+                </Button>
+              ) : null}
+            </div>
+            <p className="text-xs text-muted-foreground">{t("settings.apiKeyHint")}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-1 space-y-2">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <Hash className="w-5 h-5 text-primary" /> {t("settings.priceCodeLanguage")}
+          </h3>
+          <p className="text-sm text-muted-foreground">{t("settings.priceCodeLanguageDescription")}</p>
+        </div>
+        <Card className="md:col-span-3">
+          <CardContent className="pt-6 space-y-3">
+            <p className="text-xs text-muted-foreground">{t("settings.priceCodeExample")}</p>
+            <div className="space-y-2">
+              {priceCodeRows.map((row, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    placeholder={t("settings.priceCodeDigit")}
+                    value={row.digit}
+                    maxLength={1}
+                    className="w-20"
+                    onChange={(e) => handleUpdatePriceCodeRow(index, "digit", e.target.value)}
+                    disabled={isLoading}
+                  />
+                  <Input
+                    placeholder={t("settings.priceCodeLetter")}
+                    value={row.letter}
+                    className="w-28"
+                    onChange={(e) => handleUpdatePriceCodeRow(index, "letter", e.target.value)}
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => savePriceCodeMap(priceCodeRows)}
+                    disabled={savingPriceCode || isLoading}
+                    title={t("common.save")}
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleDeletePriceCodeRow(index)}
+                    disabled={savingPriceCode || isLoading}
+                    title={t("common.delete")}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button type="button" variant="outline" onClick={handleAddPriceCodeRow} disabled={isLoading}>
+              <Plus className="w-4 h-4 mr-2" /> {t("settings.addRow")}
             </Button>
           </CardContent>
         </Card>

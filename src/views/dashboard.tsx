@@ -221,7 +221,7 @@ export function Dashboard() {
                       <TableCell>{sale.salesmanName}</TableCell>
                       <TableCell className="font-medium">{formatMoney(sale.total)}</TableCell>
                       <TableCell>
-                        <Badge variant={sale.status === 'settled' ? 'default' : 'secondary'} className={sale.status === 'settled' ? 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/30' : ''}>
+                        <Badge variant={sale.status === 'done' ? 'default' : 'secondary'} className={sale.status === 'done' ? 'bg-primary/20 text-primary hover:bg-primary/30 border-primary/30' : ''}>
                           {sale.status}
                         </Badge>
                       </TableCell>

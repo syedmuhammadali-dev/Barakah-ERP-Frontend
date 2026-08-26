@@ -15,7 +15,7 @@ import { format, parseISO } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import { FileText, Plus, Receipt, Trash2, Upload } from "lucide-react";
+import { FileText, Pencil, Plus, Receipt, Trash2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +42,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { useAppLocale } from "@/lib/i18n";
@@ -72,7 +73,8 @@ export function Bills() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [viewBillId, setViewBillId] = useState<number | null>(null);
+  const [editingBillId, setEditingBillId] = useState<number | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadNotice, setUploadNotice] = useState<"success" | "failed" | null>(null);
@@ -81,7 +83,7 @@ export function Bills() {
   const [rowProductSearch, setRowProductSearch] = useState<Record<number, string>>({});
 
   const { data: bills, isLoading, error } = useListBills();
-  const viewBill = useMemo(() => bills?.find((b) => b.id === viewBillId) ?? null, [bills, viewBillId]);
+  const editingBill = useMemo(() => bills?.find((b) => b.id === editingBillId) ?? null, [bills, editingBillId]);
   const { data: allProducts } = useListProducts();
   const createBill = useCreateBill();
   const deleteBill = useDeleteBill();
@@ -132,6 +134,35 @@ export function Bills() {
     setIsTotalManual(false);
   };
 
+  useEffect(() => {
+    if (!isAddOpen) return;
+    if (editingBill) {
+      form.reset({
+        billNumber: editingBill.billNumber,
+        supplierName: editingBill.supplierName,
+        billDate: editingBill.billDate ? editingBill.billDate.slice(0, 10) : "",
+        notes: editingBill.notes ?? "",
+        total: editingBill.total,
+        items: editingBill.items && editingBill.items.length > 0
+          ? editingBill.items.map((item) => ({
+            productId: item.productId ? String(item.productId) : "",
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          }))
+          : [emptyItem],
+      });
+      setSourceFileName(editingBill.sourceFileName ?? null);
+      setIsTotalManual(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAddOpen, editingBill]);
+
+  const openEditDialog = (id: number) => {
+    setEditingBillId(id);
+    setIsAddOpen(true);
+  };
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -166,38 +197,62 @@ export function Bills() {
   };
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const payloadItems = values.items.map((item) => ({
+      productId: item.productId ? Number(item.productId) : undefined,
+      productName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    }));
+
     try {
-      await createBill.mutateAsync({
-        data: {
-          billNumber: values.billNumber || undefined,
-          supplierName: values.supplierName,
-          billDate: values.billDate ? new Date(values.billDate).toISOString() : undefined,
-          notes: values.notes || undefined,
-          total: values.total,
-          sourceFileName: sourceFileName ?? undefined,
-          items: values.items.map((item) => ({
-            productId: item.productId ? Number(item.productId) : undefined,
-            productName: item.productName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-          })),
-        },
-      });
+      if (editingBill) {
+        setIsSavingEdit(true);
+        await apiRequest(`/api/bills/${editingBill.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            billNumber: values.billNumber || undefined,
+            supplierName: values.supplierName,
+            billDate: values.billDate ? new Date(values.billDate).toISOString() : undefined,
+            notes: values.notes || null,
+            total: values.total,
+            items: payloadItems,
+          }),
+        });
+        toast({
+          title: t("bills.billUpdated"),
+          description: t("bills.billSaved").replace("{name}", values.supplierName),
+        });
+      } else {
+        await createBill.mutateAsync({
+          data: {
+            billNumber: values.billNumber || undefined,
+            supplierName: values.supplierName,
+            billDate: values.billDate ? new Date(values.billDate).toISOString() : undefined,
+            notes: values.notes || undefined,
+            total: values.total,
+            sourceFileName: sourceFileName ?? undefined,
+            items: payloadItems,
+          },
+        });
+        toast({
+          title: t("bills.billRecorded"),
+          description: t("bills.billSaved").replace("{name}", values.supplierName),
+        });
+      }
       await queryClient.invalidateQueries({ queryKey: getListBillsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
-      toast({
-        title: t("bills.billRecorded"),
-        description: t("bills.billSaved").replace("{name}", values.supplierName),
-      });
       resetForm();
+      setEditingBillId(null);
       setIsAddOpen(false);
     } catch (error) {
       toast({
-        title: t("bills.unableToSaveBill"),
+        title: editingBill ? t("bills.unableToUpdateBill") : t("bills.unableToSaveBill"),
         description: getApiErrorMessage(error, t("bills.checkForm")),
         variant: "destructive",
       });
+    } finally {
+      setIsSavingEdit(false);
     }
   });
 
@@ -219,16 +274,28 @@ export function Bills() {
           <h1 className="text-3xl font-bold tracking-tight">{t("bills.title")}</h1>
           <p className="text-muted-foreground mt-1">{t("bills.description")}</p>
         </div>
-        <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) resetForm(); }}>
+        <Dialog
+          open={isAddOpen}
+          onOpenChange={(open) => {
+            setIsAddOpen(open);
+            if (!open) {
+              resetForm();
+              setEditingBillId(null);
+            }
+          }}
+        >
           <DialogTrigger asChild>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => setEditingBillId(null)}
+            >
               <Plus className="w-4 h-4 mr-2" /> {t("bills.addBill")}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-140 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{t("bills.addNewBill")}</DialogTitle>
-              <DialogDescription>{t("bills.addBillDescription")}</DialogDescription>
+              <DialogTitle>{editingBill ? t("bills.editBill") : t("bills.addNewBill")}</DialogTitle>
+              <DialogDescription>{editingBill ? t("bills.editBillDescription") : t("bills.addBillDescription")}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-2 pt-2">
@@ -418,68 +485,14 @@ export function Bills() {
                   </FormItem>
                 )} />
 
-                <Button type="submit" className="w-full" disabled={createBill.isPending}>
-                  {createBill.isPending ? t("bills.saving") : t("bills.saveBill")}
+                <Button type="submit" className="w-full" disabled={createBill.isPending || isSavingEdit}>
+                  {(createBill.isPending || isSavingEdit) ? t("bills.saving") : t("bills.saveBill")}
                 </Button>
               </form>
             </Form>
           </DialogContent>
         </Dialog>
       </div>
-
-      <Dialog open={Boolean(viewBillId)} onOpenChange={(open) => !open && setViewBillId(null)}>
-        <DialogContent className="sm:max-w-140 max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{viewBill?.billNumber}</DialogTitle>
-            <DialogDescription>
-              {viewBill ? `${viewBill.supplierName} — ${format(parseISO(viewBill.billDate), "MMM d, yyyy")}` : ""}
-            </DialogDescription>
-          </DialogHeader>
-          {viewBill ? (
-            <div className="space-y-4">
-              {viewBill.sourceFileName ? (
-                <Badge variant="outline" className="text-xs gap-1 w-fit">
-                  <FileText className="w-3 h-3" /> {viewBill.sourceFileName}
-                </Badge>
-              ) : null}
-              <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow>
-                    <TableHead>{t("bills.productName")}</TableHead>
-                    <TableHead className="text-right">{t("bills.quantity")}</TableHead>
-                    <TableHead className="text-right">{t("bills.unitPrice")}</TableHead>
-                    <TableHead className="text-right">{t("bills.total")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(viewBill.items ?? []).map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.productName}</TableCell>
-                      <TableCell className="text-right">{item.quantity}</TableCell>
-                      <TableCell className="text-right">{formatMoney(item.unitPrice)}</TableCell>
-                      <TableCell className="text-right">{formatMoney(item.lineTotal)}</TableCell>
-                    </TableRow>
-                  ))}
-                  {(viewBill.items ?? []).length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                        {t("bills.noBills")}
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-              {viewBill.notes ? (
-                <p className="text-sm text-muted-foreground">{viewBill.notes}</p>
-              ) : null}
-              <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-4 py-3">
-                <span className="text-sm font-medium">{t("bills.total")}</span>
-                <span className="text-lg font-bold">{formatMoney(viewBill.total)}</span>
-              </div>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
@@ -522,7 +535,7 @@ export function Bills() {
                   <TableRow
                     key={bill.id}
                     className="hover:bg-muted/20 cursor-pointer"
-                    onClick={() => setViewBillId(bill.id)}
+                    onClick={() => openEditDialog(bill.id)}
                   >
                     <TableCell className="font-mono text-xs">{bill.billNumber}</TableCell>
                     <TableCell>{bill.supplierName}</TableCell>
@@ -540,17 +553,30 @@ export function Bills() {
                     </TableCell>
                     <TableCell className="text-right font-medium">{formatMoney(bill.total)}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteTarget({ id: bill.id, name: bill.billNumber });
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title={t("bills.editBill")}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditDialog(bill.id);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget({ id: bill.id, name: bill.billNumber });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

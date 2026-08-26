@@ -1,20 +1,35 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api";
 import { useGetRevenueReport, useGetInventoryDistribution, useGetTopProducts, useListSalesmen, useListProducts, useListSupplierReturns, useListSales, useGetDashboardOverview } from "@barakah/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
 import { format, parseISO } from "date-fns";
-import { Download, FileText, FileSpreadsheet, BarChart4, Package, Undo2, Calculator, Users } from "lucide-react";
+import { Download, FileText, FileSpreadsheet, BarChart4, Package, Undo2, Calculator, Users, Eye, EyeOff, ChevronDown, ChevronRight, Sparkles, CalendarDays, TrendingUp } from "lucide-react";
 import { GetRevenueReportPeriod } from "@barakah/api-client-react";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { useAppLocale } from "@/lib/i18n";
+
+interface SalesOverview {
+  todayTotal: number;
+  monthTotal: number;
+  lastMonthTotal: number;
+  accountCreatedYear: number;
+  currentYear: number;
+}
+interface DailySalesItem { date: string; day: number; total: number; }
+interface MonthlySalesItem { month: number; label: string; total: number; }
 
 const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
@@ -30,6 +45,47 @@ export function Reports() {
   const { data: products } = useListProducts();
   const { data: returns } = useListSupplierReturns();
   const { data: overview } = useGetDashboardOverview();
+
+  const [hideMonthly, setHideMonthly] = useState(false);
+  const [hideDaily, setHideDaily] = useState(false);
+  const [isDailyTableOpen, setIsDailyTableOpen] = useState(false);
+  const [isMonthlyTableOpen, setIsMonthlyTableOpen] = useState(false);
+  const [expandedYear, setExpandedYear] = useState<number | null>(null);
+  const [growPrompt, setGrowPrompt] = useState("");
+
+  const { data: salesOverview } = useQuery<SalesOverview>({
+    queryKey: ["/api/reports/sales-overview"],
+    queryFn: () => apiRequest("/api/reports/sales-overview"),
+  });
+  const { data: dailySales, isLoading: dailySalesLoading } = useQuery<DailySalesItem[]>({
+    queryKey: ["/api/reports/daily-sales"],
+    queryFn: () => apiRequest("/api/reports/daily-sales"),
+    enabled: isDailyTableOpen,
+  });
+  const { data: monthlySales, isLoading: monthlySalesLoading } = useQuery<MonthlySalesItem[]>({
+    queryKey: ["/api/reports/monthly-sales", salesOverview?.currentYear],
+    queryFn: () => apiRequest(`/api/reports/monthly-sales?year=${salesOverview?.currentYear}`),
+    enabled: isMonthlyTableOpen && salesOverview != null,
+  });
+  const { data: expandedYearSales, isLoading: expandedYearLoading } = useQuery<MonthlySalesItem[]>({
+    queryKey: ["/api/reports/monthly-sales", expandedYear],
+    queryFn: () => apiRequest(`/api/reports/monthly-sales?year=${expandedYear}`),
+    enabled: expandedYear != null,
+  });
+  const growMutation = useMutation({
+    mutationFn: (prompt: string) =>
+      apiRequest<{ reply: string }>("/api/reports/grow-business", {
+        method: "POST",
+        body: JSON.stringify({ prompt: prompt.trim() || undefined }),
+      }),
+  });
+
+  const years = salesOverview
+    ? Array.from(
+        { length: salesOverview.currentYear - salesOverview.accountCreatedYear + 1 },
+        (_, i) => salesOverview.currentYear - i,
+      )
+    : [];
 
   const downloadCsv = () => {
     if (section === "sales") {
@@ -104,6 +160,144 @@ export function Reports() {
         <div className="flex-1 space-y-6">
           {section === "sales" && (
             <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="cursor-pointer hover:border-primary/40 transition-colors" onClick={() => setIsMonthlyTableOpen(true)}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-muted-foreground">{t("reports.monthlySales")}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); setHideMonthly((v) => !v); }}
+                      >
+                        {hideMonthly ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                    <h3 className="text-3xl font-bold mt-1 text-primary">
+                      {hideMonthly ? "••••••" : formatMoney(salesOverview?.monthTotal)}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {t("reports.lastMonth")}: {hideMonthly ? "••••••" : formatMoney(salesOverview?.lastMonthTotal)}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:border-primary/40 transition-colors" onClick={() => setIsDailyTableOpen(true)}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-muted-foreground">{t("reports.todaySales")}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => { e.stopPropagation(); setHideDaily((v) => !v); }}
+                      >
+                        {hideDaily ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                    <h3 className="text-3xl font-bold mt-1">
+                      {hideDaily ? "••••••" : formatMoney(salesOverview?.todayTotal)}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-2">{t("reports.clickForDailyBreakdown")}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-primary" /> {t("reports.yearlyBreakdown")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {years.map((year) => (
+                    <div key={year} className="border border-border/50 rounded-lg overflow-hidden">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors text-left"
+                        onClick={() => setExpandedYear((y) => (y === year ? null : year))}
+                      >
+                        <span className="font-medium">{year}</span>
+                        {expandedYear === year ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      </button>
+                      {expandedYear === year && (
+                        <div className="p-3 pt-0 space-y-1">
+                          {expandedYearLoading ? (
+                            <Skeleton className="h-24 w-full" />
+                          ) : (
+                            (expandedYearSales ?? []).map((m) => (
+                              <div key={m.month} className="flex items-center justify-between text-sm py-1 border-b border-border/30 last:border-0">
+                                <span className="text-muted-foreground">{m.label}</span>
+                                <span className="font-medium">{formatMoney(m.total)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {years.length === 0 ? <p className="text-sm text-muted-foreground">{t("reports.na")}</p> : null}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-primary" /> {t("reports.monthlyTrend")} ({salesOverview?.currentYear})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2 pl-0">
+                  <div className="h-[280px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={monthlySales ?? []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                        <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                        <RechartsTooltip
+                          contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                        />
+                        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" /> {t("reports.askAiTitle")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">{t("reports.askAiDescription")}</p>
+                  <Textarea
+                    placeholder={t("reports.askAiPlaceholder")}
+                    value={growPrompt}
+                    onChange={(e) => setGrowPrompt(e.target.value)}
+                    rows={3}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => growMutation.mutate(growPrompt)}
+                    disabled={growMutation.isPending}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    {growMutation.isPending ? t("reports.askAiLoading") : t("reports.askAiButton")}
+                  </Button>
+                  {growMutation.data ? (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm whitespace-pre-line">
+                      {growMutation.data.reply}
+                    </div>
+                  ) : null}
+                  {growMutation.isError ? (
+                    <p className="text-sm text-destructive">{t("reports.askAiFailed")}</p>
+                  ) : null}
+                </CardContent>
+              </Card>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card>
                   <CardContent className="pt-6">
@@ -195,8 +389,8 @@ export function Reports() {
                             <TableCell className="font-mono text-xs">{invoice.invoiceId}</TableCell>
                             <TableCell>{invoice.customer}</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className={invoice.status === 'settled' ? 'text-green-500 border-green-500/20 bg-green-500/10' : 'text-muted-foreground'}>
-                                {invoice.status === 'settled' ? t("sales.settled")
+                              <Badge variant="outline" className={invoice.status === 'done' ? 'text-green-500 border-green-500/20 bg-green-500/10' : 'text-muted-foreground'}>
+                                {invoice.status === 'done' ? t("sales.done")
                                   : invoice.status === 'pending' ? t("sales.pending")
                                     : invoice.status === 'credit' ? t("sales.credit")
                                       : invoice.status === 'refunded' ? t("sales.refunded")
@@ -452,6 +646,68 @@ export function Reports() {
           )}
         </div>
       </div>
+
+      <Dialog open={isDailyTableOpen} onOpenChange={setIsDailyTableOpen}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{t("reports.dailyBreakdownTitle")}</DialogTitle>
+            <DialogDescription>{t("reports.dailyBreakdownDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1">
+            {dailySalesLoading ? (
+              <Skeleton className="h-64 w-full" />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("reports.date")}</TableHead>
+                    <TableHead className="text-right">{t("reports.grossSales")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(dailySales ?? []).map((d) => (
+                    <TableRow key={d.date}>
+                      <TableCell>{d.date}</TableCell>
+                      <TableCell className="text-right font-medium">{formatMoney(d.total)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isMonthlyTableOpen} onOpenChange={setIsMonthlyTableOpen}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{t("reports.monthlyBreakdownTitle")}</DialogTitle>
+            <DialogDescription>{t("reports.monthlyBreakdownDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1">
+            {monthlySalesLoading ? (
+              <Skeleton className="h-64 w-full" />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("reports.month")}</TableHead>
+                    <TableHead className="text-right">{t("reports.grossSales")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(monthlySales ?? []).map((m) => (
+                    <TableRow key={m.month}>
+                      <TableCell>{m.label}</TableCell>
+                      <TableCell className="text-right font-medium">{formatMoney(m.total)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

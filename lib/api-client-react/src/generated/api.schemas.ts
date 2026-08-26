@@ -183,6 +183,8 @@ export interface Product {
   margin?: number | null;
   /** @nullable */
   priceCode?: string | null;
+  /** @nullable */
+  costPrice?: number | null;
   stockLevel: number;
   maxStock: number;
   status: ProductStatus;
@@ -209,6 +211,8 @@ export interface ProductInput {
   margin?: number | null;
   /** @nullable */
   priceCode?: string | null;
+  /** @nullable */
+  costPrice?: number | null;
   stockLevel: number;
   maxStock: number;
   isAmanat?: boolean;
@@ -229,6 +233,8 @@ export interface ProductUpdate {
   margin?: number | null;
   /** @nullable */
   priceCode?: string | null;
+  /** @nullable */
+  costPrice?: number | null;
   /** @nullable */
   stockLevel?: number | null;
   /** @nullable */
@@ -272,7 +278,7 @@ export const SalePaymentMethod = {
 export type SaleStatus = (typeof SaleStatus)[keyof typeof SaleStatus];
 
 export const SaleStatus = {
-  settled: "settled",
+  done: "done",
   credit: "credit",
   refunded: "refunded",
   pending: "pending",
@@ -360,7 +366,7 @@ export type SaleUpdateStatus =
   | null;
 
 export const SaleUpdateStatus = {
-  settled: "settled",
+  done: "done",
   credit: "credit",
   refunded: "refunded",
   pending: "pending",
@@ -371,6 +377,18 @@ export interface SaleUpdate {
   status?: SaleUpdateStatus;
   /** @nullable */
   discount?: number | null;
+  /** @nullable */
+  customerName?: string | null;
+  /** @nullable */
+  customerPhone?: string | null;
+  /** @nullable */
+  salesmanId?: number | null;
+  /** @nullable */
+  paymentMethod?: SalePaymentMethod | null;
+  /** @nullable */
+  total?: number | null;
+  /** @nullable */
+  items?: SaleItemInput[] | null;
 }
 
 export interface SalesSummary {
@@ -576,6 +594,13 @@ export interface CustomerInput {
   contactEmail?: string | null;
 }
 
+export interface PriceCodeMapEntry {
+  /** @minLength 1, @maxLength 1 */
+  digit: string;
+  /** @minLength 1 */
+  letter: string;
+}
+
 export interface ShopSettings {
   shopName: string;
   contactEmail: string;
@@ -591,6 +616,8 @@ export interface ShopSettings {
   emailNotifications: boolean;
   pushNotifications: boolean;
   smsAlerts: boolean;
+  hasCustomApiKey: boolean;
+  priceCodeMap: PriceCodeMapEntry[];
 }
 
 export interface ShopSettingsUpdate {
@@ -620,6 +647,10 @@ export interface ShopSettingsUpdate {
   pushNotifications?: boolean | null;
   /** @nullable */
   smsAlerts?: boolean | null;
+  /** @nullable */
+  aiApiKey?: string | null;
+  /** @nullable */
+  priceCodeMap?: PriceCodeMapEntry[] | null;
 }
 
 export interface AuditEntry {

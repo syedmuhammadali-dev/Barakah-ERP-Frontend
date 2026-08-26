@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useFieldArray, useForm } from "react-hook-form";
-import { Bike, FileDown, Pencil, Plus, Trash2, Wrench } from "lucide-react";
+import { Bike, CheckCircle2, Download, Eye, Pencil, Plus, Trash2, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,13 +30,23 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { formatMoney } from "@/lib/format";
 import { useAppLocale } from "@/lib/i18n";
-import { generateBillPdf } from "@/lib/bill-pdf";
-import { useGetBusinessProfile } from "@barakah/api-client-react";
+import { generateBillPdf, type BillData } from "@/lib/bill-pdf";
+import { InvoicePreviewDialog } from "@/components/invoice-preview-dialog";
+import { useGetBusinessProfile, useListProducts } from "@barakah/api-client-react";
+
+type MechanicBillStatus = "pending" | "done";
 
 interface MechanicBillItem {
   id: number;
@@ -55,11 +65,13 @@ interface MechanicBill {
   mechanicName: string | null;
   total: number;
   notes: string | null;
+  status: MechanicBillStatus;
   createdAt: string;
   items?: MechanicBillItem[];
 }
 
 const itemSchema = z.object({
+  productId: z.string().optional(),
   productName: z.string().min(1, "Item name is required"),
   quantity: z.coerce.number().positive("Quantity must be positive"),
   unitPrice: z.coerce.number().min(0, "Price must be positive"),
@@ -77,7 +89,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const emptyItem = { productName: "", quantity: 1, unitPrice: 0 };
+const emptyItem = { productId: "", productName: "", quantity: 1, unitPrice: 0 };
 
 const defaultFormValues: FormValues = {
   customerName: "",
@@ -89,23 +101,40 @@ const defaultFormValues: FormValues = {
   items: [emptyItem],
 };
 
-const MECHANIC_BILLS_QUERY_KEY = ["/api/mechanic-bills"];
+function mechanicBillsQueryKey(status: string) {
+  return ["/api/mechanic-bills", status];
+}
 
 export function MechanicBills() {
   const { t } = useAppLocale();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | MechanicBillStatus>("all");
+  const [previewBill, setPreviewBill] = useState<BillData | null>(null);
+  const [openProductRow, setOpenProductRow] = useState<number | null>(null);
+  const [rowProductSearch, setRowProductSearch] = useState<Record<number, string>>({});
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isTotalManual, setIsTotalManual] = useState(false);
 
   const { data: bills, isLoading, error } = useQuery({
-    queryKey: MECHANIC_BILLS_QUERY_KEY,
-    queryFn: () => apiRequest<MechanicBill[]>("/api/mechanic-bills"),
+    queryKey: mechanicBillsQueryKey(statusFilter),
+    queryFn: () => apiRequest<MechanicBill[]>(
+      statusFilter === "all" ? "/api/mechanic-bills" : `/api/mechanic-bills?status=${statusFilter}`,
+    ),
   });
   const { data: businessProfile } = useGetBusinessProfile({ query: { queryKey: ["businessProfile"], retry: false } });
+  const { data: allProducts } = useListProducts();
+
+  const getFilteredProducts = (query: string) => {
+    if (!query.trim()) return (allProducts ?? []).slice(0, 10);
+    const q = query.toLowerCase();
+    return (allProducts ?? []).filter((p) =>
+      p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
+    ).slice(0, 10);
+  };
 
   const selectedBill = useMemo(
     () => bills?.find((b) => b.id === selectedId) ?? null,
@@ -145,7 +174,7 @@ export function MechanicBills() {
         notes: selectedBill.notes ?? "",
         total: selectedBill.total,
         items: selectedBill.items && selectedBill.items.length > 0
-          ? selectedBill.items.map((i) => ({ productName: i.productName, quantity: i.quantity, unitPrice: i.unitPrice }))
+          ? selectedBill.items.map((i) => ({ productId: "", productName: i.productName, quantity: i.quantity, unitPrice: i.unitPrice }))
           : [emptyItem],
       });
       setIsTotalManual(true);
@@ -181,6 +210,7 @@ export function MechanicBills() {
           unitPrice: item.unitPrice,
         })),
       };
+      setRowProductSearch({});
 
       if (selectedBill) {
         await apiRequest(`/api/mechanic-bills/${selectedBill.id}`, {
@@ -196,7 +226,7 @@ export function MechanicBills() {
         toast({ title: t("mechanicBills.created"), description: t("mechanicBills.createdDescription") });
       }
 
-      await queryClient.invalidateQueries({ queryKey: MECHANIC_BILLS_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ["/api/mechanic-bills"] });
       setIsFormOpen(false);
       setSelectedId(null);
     } catch (err) {
@@ -214,7 +244,7 @@ export function MechanicBills() {
     if (!deleteTarget) return;
     try {
       await apiRequest(`/api/mechanic-bills/${deleteTarget.id}`, { method: "DELETE" });
-      await queryClient.invalidateQueries({ queryKey: MECHANIC_BILLS_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: ["/api/mechanic-bills"] });
       toast({ title: t("mechanicBills.deleted") });
       setDeleteTarget(null);
       if (selectedId === deleteTarget.id) {
@@ -230,40 +260,64 @@ export function MechanicBills() {
     }
   };
 
+  const buildMechanicBillData = (bill: MechanicBill): BillData => ({
+    shopName: businessProfile?.businessName || t("sales.businessNameFallback"),
+    invoiceId: bill.jobNumber,
+    customerName: bill.customerName,
+    saleDate: bill.createdAt,
+    paymentMethodLabel: bill.mechanicName
+      ? `${t("mechanicBills.mechanicName")}: ${bill.mechanicName}`
+      : t("mechanicBills.title"),
+    items: (bill.items && bill.items.length > 0)
+      ? bill.items.map((item) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        lineTotal: item.lineTotal,
+      }))
+      : [{ productName: t("sales.na"), quantity: 1, unitPrice: bill.total }],
+    discount: 0,
+    total: bill.total,
+    labels: {
+      billTitle: t("sales.billTitle"),
+      billShop: t("sales.billShop"),
+      billCustomer: t("sales.billCustomer"),
+      billInvoice: t("sales.billInvoice"),
+      billDate: t("sales.billDate"),
+      billPayment: t("sales.billPayment"),
+      billItem: t("sales.billItem"),
+      billQty: t("sales.billQty"),
+      billUnitPrice: t("sales.billUnitPrice"),
+      billTotal: t("sales.billTotal"),
+      billDiscount: t("sales.billDiscount"),
+      billGrandTotal: t("sales.billGrandTotal"),
+    },
+  });
+
   const handleGenerateInvoice = (bill: MechanicBill) => {
-    generateBillPdf({
-      shopName: businessProfile?.businessName || t("sales.businessNameFallback"),
-      invoiceId: bill.jobNumber,
-      customerName: bill.customerName,
-      saleDate: bill.createdAt,
-      paymentMethodLabel: bill.mechanicName
-        ? `${t("mechanicBills.mechanicName")}: ${bill.mechanicName}`
-        : t("mechanicBills.title"),
-      items: (bill.items && bill.items.length > 0)
-        ? bill.items.map((item) => ({
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          lineTotal: item.lineTotal,
-        }))
-        : [{ productName: t("sales.na"), quantity: 1, unitPrice: bill.total }],
-      discount: 0,
-      total: bill.total,
-      labels: {
-        billTitle: t("sales.billTitle"),
-        billShop: t("sales.billShop"),
-        billCustomer: t("sales.billCustomer"),
-        billInvoice: t("sales.billInvoice"),
-        billDate: t("sales.billDate"),
-        billPayment: t("sales.billPayment"),
-        billItem: t("sales.billItem"),
-        billQty: t("sales.billQty"),
-        billUnitPrice: t("sales.billUnitPrice"),
-        billTotal: t("sales.billTotal"),
-        billDiscount: t("sales.billDiscount"),
-        billGrandTotal: t("sales.billGrandTotal"),
-      },
-    });
+    generateBillPdf(buildMechanicBillData(bill));
+  };
+
+  const toggleStatus = async (bill: MechanicBill, e?: MouseEvent) => {
+    e?.stopPropagation();
+    const nextStatus: MechanicBillStatus = bill.status === "done" ? "pending" : "done";
+    try {
+      await apiRequest(`/api/mechanic-bills/${bill.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["/api/mechanic-bills"] });
+      if (nextStatus === "done") {
+        await queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+        toast({ title: t("mechanicBills.markedDone"), description: t("mechanicBills.markedDoneDescription") });
+      }
+    } catch (err) {
+      toast({
+        title: t("mechanicBills.saveFailed"),
+        description: getApiErrorMessage(err),
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -273,9 +327,21 @@ export function MechanicBills() {
           <h1 className="text-3xl font-bold tracking-tight">{t("mechanicBills.title")}</h1>
           <p className="text-muted-foreground mt-1">{t("mechanicBills.description")}</p>
         </div>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={openCreateDialog}>
-          <Plus className="w-4 h-4 mr-2" /> {t("mechanicBills.addBill")}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as "all" | MechanicBillStatus)}>
+            <SelectTrigger className="w-40 bg-muted/50 border-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("mechanicBills.filterAllStatus")}</SelectItem>
+              <SelectItem value="pending">{t("mechanicBills.statusPending")}</SelectItem>
+              <SelectItem value="done">{t("mechanicBills.statusDone")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-2" /> {t("mechanicBills.addBill")}
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isFormOpen} onOpenChange={(open) => { setIsFormOpen(open); if (!open) setSelectedId(null); }}>
@@ -330,11 +396,49 @@ export function MechanicBills() {
                   <span>{t("bills.unitPrice")}</span>
                   <span />
                 </div>
-                {itemFields.map((itemField, index) => (
+                {itemFields.map((itemField, index) => {
+                  const query = rowProductSearch[index] ?? form.getValues(`items.${index}.productName`) ?? "";
+                  const options = openProductRow === index ? getFilteredProducts(query) : [];
+                  return (
                   <div key={itemField.id} className="grid grid-cols-[1fr_70px_110px_auto] gap-2 items-start">
                     <FormField control={form.control} name={`items.${index}.productName`} render={({ field }) => (
-                      <FormItem>
-                        <FormControl><Input placeholder={t("mechanicBills.itemPlaceholder")} {...field} /></FormControl>
+                      <FormItem className="relative">
+                        <FormControl>
+                          <Input
+                            placeholder={t("mechanicBills.itemPlaceholder")}
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e.target.value);
+                              setRowProductSearch((prev) => ({ ...prev, [index]: e.target.value }));
+                              form.setValue(`items.${index}.productId`, "");
+                              setOpenProductRow(index);
+                            }}
+                            onFocus={() => setOpenProductRow(index)}
+                            onBlur={() => setTimeout(() => setOpenProductRow((cur) => (cur === index ? null : cur)), 200)}
+                          />
+                        </FormControl>
+                        {options.length > 0 && (
+                          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                            {options.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  field.onChange(p.name);
+                                  form.setValue(`items.${index}.productId`, String(p.id));
+                                  form.setValue(`items.${index}.unitPrice`, p.salePrice);
+                                  setRowProductSearch((prev) => ({ ...prev, [index]: p.name }));
+                                  setOpenProductRow(null);
+                                }}
+                              >
+                                <span className="font-medium">{p.name}</span>
+                                <span className="text-muted-foreground ml-2 text-xs">{p.sku}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -361,7 +465,8 @@ export function MechanicBills() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                ))}
+                  );
+                })}
                 <Button type="button" variant="outline" size="sm" onClick={() => appendItem(emptyItem)}>
                   <Plus className="h-4 w-4 mr-1" /> {t("sales.addItem")}
                 </Button>
@@ -398,6 +503,21 @@ export function MechanicBills() {
                 </FormItem>
               )} />
 
+              {selectedBill ? (
+                <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-4 py-3">
+                  <span className="text-sm font-medium">{t("mechanicBills.statusPending")}/{t("mechanicBills.statusDone")}</span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={selectedBill.status === "done" ? "outline" : "default"}
+                    onClick={(e) => toggleStatus(selectedBill, e)}
+                  >
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    {selectedBill.status === "done" ? t("mechanicBills.markPending") : t("mechanicBills.markDone")}
+                  </Button>
+                </div>
+              ) : null}
+
               <div className="flex items-center gap-2">
                 {selectedBill ? (
                   <Button
@@ -410,8 +530,13 @@ export function MechanicBills() {
                   </Button>
                 ) : null}
                 {selectedBill ? (
+                  <Button type="button" variant="outline" onClick={() => setPreviewBill(buildMechanicBillData(selectedBill))}>
+                    <Eye className="h-4 w-4 mr-2" /> {t("mechanicBills.previewInvoice")}
+                  </Button>
+                ) : null}
+                {selectedBill ? (
                   <Button type="button" variant="outline" onClick={() => handleGenerateInvoice(selectedBill)}>
-                    <FileDown className="h-4 w-4 mr-2" /> {t("mechanicBills.generateInvoice")}
+                    <Download className="h-4 w-4 mr-2" /> {t("mechanicBills.downloadInvoice")}
                   </Button>
                 ) : null}
                 <Button type="submit" className="flex-1" disabled={isSaving}>
@@ -453,7 +578,7 @@ export function MechanicBills() {
           {(bills ?? []).map((bill) => (
             <Card
               key={bill.id}
-              className="cursor-pointer hover:border-primary/50 transition-colors"
+              className={`cursor-pointer transition-colors ${bill.status === "done" ? "border-green-500/40 hover:border-green-500/60" : "border-destructive/40 hover:border-destructive/60"}`}
               onClick={() => openEditDialog(bill.id)}
             >
               <CardContent className="pt-6 space-y-3">
@@ -462,16 +587,32 @@ export function MechanicBills() {
                     <div className="font-mono text-xs text-muted-foreground">{bill.jobNumber}</div>
                     <div className="font-semibold">{bill.customerName}</div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => { e.stopPropagation(); openEditDialog(bill.id); }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title={t("mechanicBills.previewInvoice")} onClick={(e) => { e.stopPropagation(); setPreviewBill(buildMechanicBillData(bill)); }}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" title={t("mechanicBills.downloadInvoice")} onClick={(e) => { e.stopPropagation(); handleGenerateInvoice(bill); }}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={(e) => { e.stopPropagation(); openEditDialog(bill.id); }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge
+                    className={bill.status === "done"
+                      ? "bg-green-500/10 text-green-500 border-green-500/20"
+                      : "bg-destructive/10 text-destructive border-destructive/20"}
+                    variant="outline"
+                  >
+                    {bill.status === "done" ? t("mechanicBills.statusDone") : t("mechanicBills.statusPending")}
+                  </Badge>
                   {bill.bikeNumber ? (
                     <Badge variant="outline" className="text-xs gap-1">
                       <Bike className="w-3 h-3" /> {bill.bikeNumber}
@@ -492,11 +633,23 @@ export function MechanicBills() {
                   </span>
                   <span className="font-bold">{formatMoney(bill.total)}</span>
                 </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={bill.status === "done" ? "outline" : "default"}
+                  className="w-full"
+                  onClick={(e) => toggleStatus(bill, e)}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  {bill.status === "done" ? t("mechanicBills.markPending") : t("mechanicBills.markDone")}
+                </Button>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <InvoicePreviewDialog bill={previewBill} onOpenChange={(open) => !open && setPreviewBill(null)} />
     </div>
   );
 }
