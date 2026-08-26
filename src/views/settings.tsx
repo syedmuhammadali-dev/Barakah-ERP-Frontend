@@ -430,7 +430,7 @@ export function Settings() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("settings.baseCurrency")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger disabled={isLoading}>
                             <SelectValue placeholder={t("settings.selectCurrency")} />
@@ -454,7 +454,7 @@ export function Settings() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("settings.timezone")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger disabled={isLoading}>
                             <SelectValue placeholder={t("settings.selectTimezone")} />

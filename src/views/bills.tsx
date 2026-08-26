@@ -174,12 +174,18 @@ export function Bills() {
     try {
       const extracted = await extractBillItemsFromFile(file);
       if (extracted.length > 0) {
-        replaceItems(extracted.map((item) => ({
-          productId: "",
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })));
+        replaceItems(extracted.map((item) => {
+          const normalizedName = item.productName.trim().toLowerCase();
+          const match = (allProducts ?? []).find(
+            (p) => p.name.trim().toLowerCase() === normalizedName,
+          );
+          return {
+            productId: match ? String(match.id) : "",
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          };
+        }));
         setUploadNotice("success");
       } else {
         setUploadNotice("failed");

@@ -137,13 +137,13 @@ export function Login() {
 
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error(data?.error ?? "Login failed");
+        throw new Error(data?.error ?? t("auth.loginFailed"));
       }
 
       beginTransition();
       router.replace("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : t("auth.loginFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -155,26 +155,22 @@ export function Login() {
         <div className="hidden lg:block space-y-6 pr-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20">
             <ShieldCheck className="h-4 w-4" />
-            Secure local ERP access
+            {t("auth.secureLocalAccess")}
           </div>
           <h1 className="text-5xl font-bold tracking-tight leading-tight">
-            Sign in to Barakah ERP
+            {t("auth.signInToBarakah")}
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
-            Use the local demo account to test inventory, sales, zakat, and
-            reporting flows exactly like a real deployment.
+            {t("auth.demoAccountHint")}
           </p>
           <div className="rounded-2xl border border-border bg-muted/30 p-6 space-y-3">
             <p className="text-sm font-medium text-muted-foreground">
-              Demo credentials
+              {t("auth.demoCredentials")}
             </p>
-            <p className="font-mono text-sm">Email: local@barakah.dev</p>
-            <p className="font-mono text-sm">Password: 03182927392</p>
+            <p className="font-mono text-sm">{t("auth.demoEmailLabel")}: local@barakah.dev</p>
+            <p className="font-mono text-sm">{t("auth.demoPasswordLabel")}: 03182927392</p>
             <p className="text-xs text-amber-500 dark:text-amber-400 leading-relaxed">
-              This is a shared public testing/demo account so every visitor can
-              try the ERP. Do not enter your real business, customer, or
-              personal data here — anything you add is visible to other demo
-              users and may be reset at any time.
+              {t("auth.demoAccountWarning")}
             </p>
           </div>
         </div>

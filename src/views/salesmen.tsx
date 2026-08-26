@@ -142,8 +142,8 @@ export function Salesmen() {
           }),
         });
         toast({
-          title: "Salesman updated",
-          description: `${values.name} has been updated successfully.`,
+          title: t("salesmen.salesmanUpdated"),
+          description: t("salesmen.salesmanUpdatedDescription").replace("{name}", values.name),
         });
       } else {
         await createMutation.mutateAsync({
@@ -161,8 +161,8 @@ export function Salesmen() {
           },
         });
         toast({
-          title: "Salesman added",
-          description: `${values.name} has been added to the team.`,
+          title: t("salesmen.salesmanAdded"),
+          description: t("salesmen.salesmanAddedDescription").replace("{name}", values.name),
         });
       }
 
@@ -173,8 +173,8 @@ export function Salesmen() {
       form.reset();
     } catch (error) {
       toast({
-        title: "Unable to save salesman",
-        description: getApiErrorMessage(error, "Please check the details and try again."),
+        title: t("salesmen.unableToSaveSalesman"),
+        description: getApiErrorMessage(error, t("salesmen.checkDetailsAndRetry")),
         variant: "destructive",
       });
     }
@@ -190,13 +190,13 @@ export function Salesmen() {
       await queryClient.invalidateQueries({ queryKey: getListSalesmenQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetDashboardOverviewQueryKey() });
       toast({
-        title: "Salesman removed",
-        description: `${deleteTarget.name} has been deleted.`,
+        title: t("salesmen.salesmanRemoved"),
+        description: t("salesmen.salesmanRemovedDescription").replace("{name}", deleteTarget.name),
       });
       setDeleteTarget(null);
     } catch (error) {
       toast({
-        title: "Unable to remove salesman",
+        title: t("salesmen.unableToRemoveSalesman"),
         description: getApiErrorMessage(error),
         variant: "destructive",
       });

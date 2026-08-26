@@ -215,12 +215,12 @@ export function Inventory() {
       });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
-      toast({ title: "Product updated", description: `${values.name} has been updated.` });
+      toast({ title: t("inventory.productUpdated"), description: t("inventory.productUpdatedDescription").replace("{name}", values.name) });
       setIsEditOpen(false);
       setSelectedProduct(null);
     } catch (error) {
       console.error("Failed to update product:", error);
-      toast({ title: "Unable to update product", description: getApiErrorMessage(error, "Please review the fields and try again."), variant: "destructive" });
+      toast({ title: t("inventory.unableToUpdateProduct"), description: getApiErrorMessage(error, t("inventory.reviewFieldsAndRetry")), variant: "destructive" });
     }
   });
 
@@ -236,12 +236,12 @@ export function Inventory() {
       });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
-      toast({ title: "Stock adjusted", description: `${selectedProduct.name} is now at ${newStockLevel} units.` });
+      toast({ title: t("inventory.stockAdjustedToast"), description: t("inventory.stockAdjustedDescription").replace("{name}", selectedProduct.name).replace("{level}", String(newStockLevel)) });
       setIsAdjustOpen(false);
       setSelectedProduct(null);
     } catch (error) {
       console.error("Failed to adjust stock:", error);
-      toast({ title: "Unable to adjust stock", description: getApiErrorMessage(error, "Please try again."), variant: "destructive" });
+      toast({ title: t("inventory.unableToAdjustStock"), description: getApiErrorMessage(error, t("inventory.pleaseTryAgain")), variant: "destructive" });
     }
   };
 
@@ -254,11 +254,11 @@ export function Inventory() {
       await deleteProduct.mutateAsync({ id: deleteTarget.id });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
-      toast({ title: "Product deleted", description: `${deleteTarget.name} has been removed.` });
+      toast({ title: t("inventory.productDeleted"), description: t("inventory.productDeletedDescription").replace("{name}", deleteTarget.name) });
       setDeleteTarget(null);
     } catch (error) {
       console.error("Failed to delete product:", error);
-      toast({ title: "Unable to delete product", description: getApiErrorMessage(error, "The item could not be removed."), variant: "destructive" });
+      toast({ title: t("inventory.unableToDeleteProduct"), description: getApiErrorMessage(error, t("inventory.itemCouldNotBeRemoved")), variant: "destructive" });
     }
   };
 
@@ -283,13 +283,13 @@ export function Inventory() {
       });
       await queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
       await queryClient.invalidateQueries({ queryKey: getGetInventorySummaryQueryKey() });
-      toast({ title: "Product added", description: `${values.name} is now in the catalog.` });
+      toast({ title: t("inventory.productAdded"), description: t("inventory.productAddedDescription").replace("{name}", values.name) });
       form.reset();
       setAddExtraFields({});
       setIsAddOpen(false);
     } catch (error) {
       console.error("Failed to create product:", error);
-      toast({ title: "Unable to save product", description: getApiErrorMessage(error, "Please review the fields and try again."), variant: "destructive" });
+      toast({ title: t("inventory.unableToSaveProduct"), description: getApiErrorMessage(error, t("inventory.reviewFieldsAndRetry")), variant: "destructive" });
     }
   });
 
