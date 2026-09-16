@@ -79,6 +79,7 @@ export function Bills() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadNotice, setUploadNotice] = useState<"success" | "failed" | null>(null);
   const [sourceFileName, setSourceFileName] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [openProductRow, setOpenProductRow] = useState<number | null>(null);
   const [rowProductSearch, setRowProductSearch] = useState<Record<number, string>>({});
 
@@ -130,6 +131,7 @@ export function Bills() {
     form.reset({ billNumber: "", supplierName: "", billDate: "", notes: "", total: 0, items: [emptyItem] });
     setRowProductSearch({});
     setSourceFileName(null);
+    setImageUrl(null);
     setUploadNotice(null);
     setIsTotalManual(false);
   };
@@ -153,6 +155,7 @@ export function Bills() {
           : [emptyItem],
       });
       setSourceFileName(editingBill.sourceFileName ?? null);
+      setImageUrl(editingBill.imageUrl ?? null);
       setIsTotalManual(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,6 +174,26 @@ export function Bills() {
     setIsUploading(true);
     setUploadNotice(null);
     setSourceFileName(file.name);
+
+    void (async () => {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", "bills");
+        const response = await fetch("/api/uploads/image", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+        const data = await response.json().catch(() => null);
+        if (response.ok) {
+          setImageUrl(data.url as string);
+        }
+      } catch {
+        // Non-fatal: the bill can still be saved without a Drive photo copy.
+      }
+    })();
+
     try {
       const extracted = await extractBillItemsFromFile(file);
       if (extracted.length > 0) {
@@ -220,6 +243,7 @@ export function Bills() {
             supplierName: values.supplierName,
             billDate: values.billDate ? new Date(values.billDate).toISOString() : undefined,
             notes: values.notes || null,
+            imageUrl: imageUrl ?? null,
             total: values.total,
             items: payloadItems,
           }),
@@ -237,6 +261,7 @@ export function Bills() {
             notes: values.notes || undefined,
             total: values.total,
             sourceFileName: sourceFileName ?? undefined,
+            imageUrl: imageUrl ?? undefined,
             items: payloadItems,
           },
         });
@@ -327,6 +352,11 @@ export function Bills() {
               {uploadNotice === "failed" && (
                 <p className="text-xs text-destructive">{t("bills.extractionFailed")}</p>
               )}
+              {imageUrl ? (
+                <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="block text-xs text-primary hover:underline">
+                  {t("bills.viewPhoto")}
+                </a>
+              ) : null}
             </div>
 
             <Form {...form}>
@@ -556,6 +586,17 @@ export function Bills() {
                       ) : (
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
+                      {bill.imageUrl ? (
+                        <a
+                          href={bill.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="ml-2 text-xs text-primary hover:underline"
+                        >
+                          {t("bills.viewPhoto")}
+                        </a>
+                      ) : null}
                     </TableCell>
                     <TableCell className="text-right font-medium">{formatMoney(bill.total)}</TableCell>
                     <TableCell className="text-right">

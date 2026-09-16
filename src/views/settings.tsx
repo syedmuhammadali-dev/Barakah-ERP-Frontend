@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useGetSettings, useUpdateSettings, useGetBusinessProfile, useUpdateBusinessProfile } from "@barakah/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@barakah/auth-web";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone, Download, Monitor, KeyRound, Hash, Plus, Trash2, Save } from "lucide-react";
+import { Store, Shield, Bell, MoonStar, MapPin, Globe, Phone, Download, Monitor, KeyRound, Hash, Plus, Trash2, Save, HardDriveDownload, ExternalLink, RefreshCw } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -19,8 +19,17 @@ import { useToast } from "@/hooks/use-toast";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { exportAllDataToExcel } from "@/lib/export-data";
 import { DESKTOP_APP_DOWNLOAD_URL } from "@/lib/site";
+import { apiRequest } from "@/lib/api";
 import { Separator } from "@/components/ui/separator";
 import { useAppLocale } from "@/lib/i18n";
+
+interface DriveBackupStatus {
+  available: boolean;
+  connected: boolean;
+  folderLink?: string | null;
+  connectedEmail?: string | null;
+  lastSyncAt?: string | null;
+}
 
 const formSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -72,6 +81,39 @@ export function Settings() {
   const [savingApiKey, setSavingApiKey] = useState(false);
   const [priceCodeRows, setPriceCodeRows] = useState<{ digit: string; letter: string }[]>([]);
   const [savingPriceCode, setSavingPriceCode] = useState(false);
+  const [disconnectingDrive, setDisconnectingDrive] = useState(false);
+  const [syncingDriveNow, setSyncingDriveNow] = useState(false);
+
+  const { data: driveStatus, isLoading: driveStatusLoading } = useQuery<DriveBackupStatus>({
+    queryKey: ["/api/drive-backup/status"],
+    queryFn: () => apiRequest("/api/drive-backup/status"),
+  });
+
+  const handleDisconnectDrive = async () => {
+    setDisconnectingDrive(true);
+    try {
+      await apiRequest("/api/drive-backup/disconnect", { method: "POST" });
+      queryClient.invalidateQueries({ queryKey: ["/api/drive-backup/status"] });
+      toast({ title: t("settings.driveDisconnected") });
+    } catch (error) {
+      toast({ title: t("settings.driveActionFailed"), description: getApiErrorMessage(error), variant: "destructive" });
+    } finally {
+      setDisconnectingDrive(false);
+    }
+  };
+
+  const handleSyncDriveNow = async () => {
+    setSyncingDriveNow(true);
+    try {
+      await apiRequest("/api/drive-backup/sync-now", { method: "POST" });
+      queryClient.invalidateQueries({ queryKey: ["/api/drive-backup/status"] });
+      toast({ title: t("settings.driveSyncedNow") });
+    } catch (error) {
+      toast({ title: t("settings.driveActionFailed"), description: getApiErrorMessage(error), variant: "destructive" });
+    } finally {
+      setSyncingDriveNow(false);
+    }
+  };
 
   useEffect(() => {
     if (settings) {
@@ -714,6 +756,63 @@ export function Settings() {
             <Button type="button" variant="outline" onClick={handleAddPriceCodeRow} disabled={isLoading}>
               <Plus className="w-4 h-4 mr-2" /> {t("settings.addRow")}
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="md:col-span-1 space-y-2">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <HardDriveDownload className="w-5 h-5 text-primary" /> {t("settings.driveBackup")}
+          </h3>
+          <p className="text-sm text-muted-foreground">{t("settings.driveBackupDescription")}</p>
+        </div>
+        <Card className="md:col-span-3">
+          <CardContent className="pt-6 space-y-3">
+            {driveStatusLoading ? (
+              <Skeleton className="h-10 w-full" />
+            ) : !driveStatus?.available ? (
+              <p className="text-sm text-muted-foreground">{t("settings.driveNotAvailable")}</p>
+            ) : driveStatus.connected ? (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  {t("settings.driveConnectedAs").replace("{email}", driveStatus.connectedEmail ?? "?")}
+                </p>
+                {driveStatus.folderLink ? (
+                  <a
+                    href={driveStatus.folderLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    {t("settings.driveOpenFolder")} <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  {driveStatus.lastSyncAt
+                    ? t("settings.driveLastSynced").replace("{time}", new Date(driveStatus.lastSyncAt).toLocaleString())
+                    : t("settings.driveNotSyncedYet")}
+                </p>
+                <div className="flex gap-3 pt-1">
+                  <Button type="button" variant="outline" size="sm" onClick={handleSyncDriveNow} disabled={syncingDriveNow}>
+                    <RefreshCw className="w-4 h-4 mr-2" /> {syncingDriveNow ? t("settings.driveSyncing") : t("settings.driveSyncNow")}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={handleDisconnectDrive} disabled={disconnectingDrive}>
+                    {t("settings.driveDisconnect")}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground">{t("settings.driveNotConnected")}</p>
+                <Button type="button" asChild>
+                  <a href="/api/drive-backup/connect">
+                    <HardDriveDownload className="w-4 h-4 mr-2" /> {t("settings.driveConnectButton")}
+                  </a>
+                </Button>
+              </>
+            )}
+            <p className="text-xs text-muted-foreground">{t("settings.driveBackupHint")}</p>
           </CardContent>
         </Card>
       </div>

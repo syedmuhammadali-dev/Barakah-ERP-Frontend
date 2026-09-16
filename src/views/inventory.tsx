@@ -15,6 +15,7 @@ import {
 import { getBusinessTypeConfig } from "@/lib/business-types";
 import { computeAdjustedStock, encodePriceCode } from "@/lib/inventory-utils";
 import { BusinessTypeExtraFields } from "@/components/business-type-extra-fields";
+import { ImageUploadField } from "@/components/image-upload-field";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -69,6 +70,7 @@ export function Inventory() {
     salePrice: number;
     priceCode?: string | null;
     costPrice?: number | null;
+    imageUrl?: string | null;
     stockLevel: number;
     maxStock: number;
     status: string;
@@ -84,6 +86,8 @@ export function Inventory() {
   const [adjustReason, setAdjustReason] = useState("");
   const [addExtraFields, setAddExtraFields] = useState<Record<string, string>>({});
   const [editExtraFields, setEditExtraFields] = useState<Record<string, string>>({});
+  const [addImageUrl, setAddImageUrl] = useState<string | null>(null);
+  const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createProduct = useCreateProduct();
@@ -173,6 +177,7 @@ export function Inventory() {
     setEditExtraFields(
       Object.fromEntries(businessTypeConfig.extraFields.map((f) => [f.key, String(attrs[f.key] ?? "")])),
     );
+    setEditImageUrl(selectedProduct.imageUrl ?? null);
   }, [editForm, isEditOpen, selectedProduct, businessTypeConfig]);
 
   const openEditProduct = (product: typeof selectedProduct) => {
@@ -206,6 +211,7 @@ export function Inventory() {
           salePrice: values.salePrice,
           priceCode: values.priceCode,
           costPrice: values.costPrice ? Number(values.costPrice) : null,
+          imageUrl: editImageUrl,
           stockLevel: values.stockLevel,
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
@@ -273,6 +279,7 @@ export function Inventory() {
           salePrice: values.salePrice,
           priceCode: values.priceCode,
           costPrice: values.costPrice ? Number(values.costPrice) : undefined,
+          imageUrl: addImageUrl ?? undefined,
           stockLevel: values.stockLevel,
           maxStock: values.maxStock,
           isAmanat: values.isAmanat,
@@ -286,6 +293,7 @@ export function Inventory() {
       toast({ title: t("inventory.productAdded"), description: t("inventory.productAddedDescription").replace("{name}", values.name) });
       form.reset();
       setAddExtraFields({});
+      setAddImageUrl(null);
       setIsAddOpen(false);
     } catch (error) {
       console.error("Failed to create product:", error);
@@ -377,6 +385,10 @@ export function Inventory() {
                     values={addExtraFields}
                     onChange={(key, value) => setAddExtraFields((prev) => ({ ...prev, [key]: value }))}
                   />
+                  <div>
+                    <Label className="mb-2 block">{t("inventory.productPhoto")}</Label>
+                    <ImageUploadField folder="products" value={addImageUrl} onChange={setAddImageUrl} />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="salePrice" render={({ field }) => (
                       <FormItem>
@@ -530,6 +542,10 @@ export function Inventory() {
                 values={editExtraFields}
                 onChange={(key, value) => setEditExtraFields((prev) => ({ ...prev, [key]: value }))}
               />
+              <div>
+                <Label className="mb-2 block">{t("inventory.productPhoto")}</Label>
+                <ImageUploadField folder="products" value={editImageUrl} onChange={setEditImageUrl} />
+              </div>
               <div className="flex items-center gap-6">
                 <FormField control={editForm.control} name="isAmanat" render={({ field }) => (
                   <FormItem className="flex items-center gap-2 space-y-0">

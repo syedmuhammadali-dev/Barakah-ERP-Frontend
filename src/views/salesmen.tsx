@@ -14,6 +14,7 @@ import { Users, Plus, Percent, Search, Trophy, Pencil, Trash2 } from "lucide-rea
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ImageUploadField } from "@/components/image-upload-field";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -274,9 +275,13 @@ export function Salesmen() {
                 name="profileImageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Photo URL</FormLabel>
+                    <FormLabel>{t("salesmen.profilePhoto")}</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com/photo.jpg" {...field} value={field.value || ""} />
+                      <ImageUploadField
+                        folder="profiles"
+                        value={field.value || null}
+                        onChange={(url) => field.onChange(url ?? "")}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

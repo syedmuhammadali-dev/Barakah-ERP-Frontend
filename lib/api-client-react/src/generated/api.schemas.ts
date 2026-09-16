@@ -185,6 +185,8 @@ export interface Product {
   priceCode?: string | null;
   /** @nullable */
   costPrice?: number | null;
+  /** @nullable */
+  imageUrl?: string | null;
   stockLevel: number;
   maxStock: number;
   status: ProductStatus;
@@ -213,6 +215,8 @@ export interface ProductInput {
   priceCode?: string | null;
   /** @nullable */
   costPrice?: number | null;
+  /** @nullable */
+  imageUrl?: string | null;
   stockLevel: number;
   maxStock: number;
   isAmanat?: boolean;
@@ -235,6 +239,8 @@ export interface ProductUpdate {
   priceCode?: string | null;
   /** @nullable */
   costPrice?: number | null;
+  /** @nullable */
+  imageUrl?: string | null;
   /** @nullable */
   stockLevel?: number | null;
   /** @nullable */
@@ -752,6 +758,8 @@ export interface Bill {
   billDate: string;
   /** @nullable */
   sourceFileName?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
   total: number;
   /** @nullable */
   notes?: string | null;
@@ -765,6 +773,8 @@ export interface BillInput {
   billDate?: string;
   /** @nullable */
   sourceFileName?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
   /** @nullable */
   notes?: string | null;
   total?: number;
