@@ -349,6 +349,10 @@ export const SaleInputPaymentMethod = {
 } as const;
 
 export interface SaleInput {
+  /** @nullable */
+  invoiceId?: string | null;
+  /** @nullable */
+  saleDate?: string | null;
   customerName: string;
   /** @nullable */
   customerPhone?: string | null;
@@ -624,6 +628,9 @@ export interface ShopSettings {
   smsAlerts: boolean;
   hasCustomApiKey: boolean;
   priceCodeMap: PriceCodeMapEntry[];
+  hasDriveClientCredentials: boolean;
+  /** @nullable */
+  driveClientId?: string | null;
 }
 
 export interface ShopSettingsUpdate {
@@ -657,6 +664,10 @@ export interface ShopSettingsUpdate {
   aiApiKey?: string | null;
   /** @nullable */
   priceCodeMap?: PriceCodeMapEntry[] | null;
+  /** @nullable */
+  driveClientId?: string | null;
+  /** @nullable */
+  driveClientSecret?: string | null;
 }
 
 export interface AuditEntry {

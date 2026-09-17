@@ -25,10 +25,13 @@ import { useAppLocale } from "@/lib/i18n";
 
 interface DriveBackupStatus {
   available: boolean;
+  hasClientCredentials?: boolean;
+  clientId?: string | null;
   connected: boolean;
   folderLink?: string | null;
   connectedEmail?: string | null;
   lastSyncAt?: string | null;
+  redirectUri?: string;
 }
 
 const formSchema = z.object({
@@ -83,11 +86,39 @@ export function Settings() {
   const [savingPriceCode, setSavingPriceCode] = useState(false);
   const [disconnectingDrive, setDisconnectingDrive] = useState(false);
   const [syncingDriveNow, setSyncingDriveNow] = useState(false);
+  const [driveClientId, setDriveClientId] = useState("");
+  const [driveClientSecret, setDriveClientSecret] = useState("");
+  const [savingDriveCredentials, setSavingDriveCredentials] = useState(false);
 
   const { data: driveStatus, isLoading: driveStatusLoading } = useQuery<DriveBackupStatus>({
     queryKey: ["/api/drive-backup/status"],
     queryFn: () => apiRequest("/api/drive-backup/status"),
   });
+
+  useEffect(() => {
+    if (driveStatus?.clientId) {
+      setDriveClientId(driveStatus.clientId);
+    }
+  }, [driveStatus?.clientId]);
+
+  const handleSaveDriveCredentials = async () => {
+    setSavingDriveCredentials(true);
+    try {
+      await updateMutation.mutateAsync({
+        data: {
+          driveClientId: driveClientId.trim() || null,
+          driveClientSecret: driveClientSecret.trim() || null,
+        },
+      });
+      setDriveClientSecret("");
+      queryClient.invalidateQueries({ queryKey: ["/api/drive-backup/status"] });
+      toast({ title: t("settings.driveCredentialsSaved") });
+    } catch (error) {
+      toast({ title: t("settings.driveActionFailed"), description: getApiErrorMessage(error), variant: "destructive" });
+    } finally {
+      setSavingDriveCredentials(false);
+    }
+  };
 
   const handleDisconnectDrive = async () => {
     setDisconnectingDrive(true);
@@ -768,48 +799,106 @@ export function Settings() {
           <p className="text-sm text-muted-foreground">{t("settings.driveBackupDescription")}</p>
         </div>
         <Card className="md:col-span-3">
-          <CardContent className="pt-6 space-y-3">
+          <CardContent className="pt-6 space-y-4">
             {driveStatusLoading ? (
               <Skeleton className="h-10 w-full" />
             ) : !driveStatus?.available ? (
               <p className="text-sm text-muted-foreground">{t("settings.driveNotAvailable")}</p>
-            ) : driveStatus.connected ? (
+            ) : (
               <>
-                <p className="text-sm text-muted-foreground">
-                  {t("settings.driveConnectedAs").replace("{email}", driveStatus.connectedEmail ?? "?")}
-                </p>
-                {driveStatus.folderLink ? (
+                <div className="rounded-lg border border-border/50 p-4 space-y-3">
+                  <p className="text-sm font-medium">{t("settings.driveClientSetupTitle")}</p>
+                  <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
+                    <li>{t("settings.driveClientStep1")}</li>
+                    <li>{t("settings.driveClientStep2")}</li>
+                    <li>{t("settings.driveClientStep3")}</li>
+                    <li>
+                      {t("settings.driveClientStep4")}{" "}
+                      {driveStatus.redirectUri ? (
+                        <code className="rounded bg-muted px-1.5 py-0.5 text-[11px] break-all">{driveStatus.redirectUri}</code>
+                      ) : null}
+                    </li>
+                    <li>{t("settings.driveClientStep5")}</li>
+                  </ol>
                   <a
-                    href={driveStatus.folderLink}
+                    href="https://console.cloud.google.com/apis/credentials"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
                   >
-                    {t("settings.driveOpenFolder")} <ExternalLink className="w-3.5 h-3.5" />
+                    {t("settings.driveClientConsoleLink")} <ExternalLink className="w-3.5 h-3.5" />
                   </a>
-                ) : null}
-                <p className="text-xs text-muted-foreground">
-                  {driveStatus.lastSyncAt
-                    ? t("settings.driveLastSynced").replace("{time}", new Date(driveStatus.lastSyncAt).toLocaleString())
-                    : t("settings.driveNotSyncedYet")}
-                </p>
-                <div className="flex gap-3 pt-1">
-                  <Button type="button" variant="outline" size="sm" onClick={handleSyncDriveNow} disabled={syncingDriveNow}>
-                    <RefreshCw className="w-4 h-4 mr-2" /> {syncingDriveNow ? t("settings.driveSyncing") : t("settings.driveSyncNow")}
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={handleDisconnectDrive} disabled={disconnectingDrive}>
-                    {t("settings.driveDisconnect")}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <Input
+                      placeholder={t("settings.driveClientIdPlaceholder")}
+                      value={driveClientId}
+                      onChange={(e) => setDriveClientId(e.target.value)}
+                    />
+                    <Input
+                      type="password"
+                      placeholder={
+                        driveStatus.hasClientCredentials
+                          ? t("settings.driveClientSecretSavedPlaceholder")
+                          : t("settings.driveClientSecretPlaceholder")
+                      }
+                      value={driveClientSecret}
+                      onChange={(e) => setDriveClientSecret(e.target.value)}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSaveDriveCredentials}
+                    disabled={savingDriveCredentials || !driveClientId.trim()}
+                  >
+                    {savingDriveCredentials ? t("settings.saving") : t("settings.driveClientSaveButton")}
                   </Button>
                 </div>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-muted-foreground">{t("settings.driveNotConnected")}</p>
-                <Button type="button" asChild>
-                  <a href="/api/drive-backup/connect">
-                    <HardDriveDownload className="w-4 h-4 mr-2" /> {t("settings.driveConnectButton")}
-                  </a>
-                </Button>
+
+                {driveStatus.connected ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      {t("settings.driveConnectedAs").replace("{email}", driveStatus.connectedEmail ?? "?")}
+                    </p>
+                    {driveStatus.folderLink ? (
+                      <a
+                        href={driveStatus.folderLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                      >
+                        {t("settings.driveOpenFolder")} <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    ) : null}
+                    <p className="text-xs text-muted-foreground">
+                      {driveStatus.lastSyncAt
+                        ? t("settings.driveLastSynced").replace("{time}", new Date(driveStatus.lastSyncAt).toLocaleString())
+                        : t("settings.driveNotSyncedYet")}
+                    </p>
+                    <div className="flex gap-3 pt-1">
+                      <Button type="button" variant="outline" size="sm" onClick={handleSyncDriveNow} disabled={syncingDriveNow}>
+                        <RefreshCw className="w-4 h-4 mr-2" /> {syncingDriveNow ? t("settings.driveSyncing") : t("settings.driveSyncNow")}
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={handleDisconnectDrive} disabled={disconnectingDrive}>
+                        {t("settings.driveDisconnect")}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">{t("settings.driveNotConnected")}</p>
+                    {driveStatus.hasClientCredentials ? (
+                      <Button type="button" asChild>
+                        <a href="/api/drive-backup/connect">
+                          <HardDriveDownload className="w-4 h-4 mr-2" /> {t("settings.driveConnectButton")}
+                        </a>
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">{t("settings.driveClientRequiredHint")}</p>
+                    )}
+                  </>
+                )}
               </>
             )}
             <p className="text-xs text-muted-foreground">{t("settings.driveBackupHint")}</p>

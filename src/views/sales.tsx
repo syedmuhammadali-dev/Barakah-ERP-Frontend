@@ -91,6 +91,8 @@ const saleItemSchema = z.object({
 });
 
 const saleFormSchema = z.object({
+  invoiceId: z.string().optional().default(""),
+  saleDate: z.string().optional().default(""),
   customerName: z.string().optional().default(""),
   customerPhone: z.string().optional().default(""),
   salesmanId: z.string().optional(),
@@ -160,6 +162,8 @@ export function Sales() {
   };
 
   const defaultFormValues: SaleFormValues = {
+    invoiceId: "",
+    saleDate: "",
     customerName: "",
     customerPhone: "",
     salesmanId: "none",
@@ -258,6 +262,12 @@ export function Sales() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     const payload = {
+      ...(editingSale
+        ? {}
+        : {
+            invoiceId: values.invoiceId?.trim() || undefined,
+            saleDate: values.saleDate ? new Date(values.saleDate).toISOString() : undefined,
+          }),
       customerName: values.customerName?.trim() || "Walk-in Customer",
       customerPhone: values.customerPhone?.trim() || undefined,
       salesmanId:
@@ -412,9 +422,9 @@ export function Sales() {
     const values = form.getValues();
     setPreviewBill({
       shopName: businessProfile?.businessName || t("sales.businessNameFallback"),
-      invoiceId: editingSale?.invoiceId ?? t("sales.previewInvoice"),
+      invoiceId: editingSale?.invoiceId || values.invoiceId?.trim() || t("sales.previewInvoice"),
       customerName: values.customerName?.trim() || "Walk-in Customer",
-      saleDate: editingSale?.saleDate ?? new Date().toISOString(),
+      saleDate: editingSale?.saleDate ?? (values.saleDate ? new Date(values.saleDate).toISOString() : new Date().toISOString()),
       paymentMethodLabel: paymentMethodLabel(values.paymentMethod),
       items: values.items.map((item) => ({
         productName: item.productName || t("sales.na"),
@@ -464,6 +474,36 @@ export function Sales() {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={onSubmit} className="space-y-4 pt-4">
+                  {!editingSale ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="invoiceId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("sales.invoiceIdLabel")}</FormLabel>
+                            <FormControl>
+                              <Input placeholder={t("sales.invoiceIdPlaceholder")} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="saleDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("sales.saleDateLabel")}</FormLabel>
+                            <FormControl>
+                              <Input type="datetime-local" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ) : null}
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
